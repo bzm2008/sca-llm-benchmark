@@ -22,6 +22,12 @@ for r in rows:
 # 排序: stale 排最后
 ordered = sorted(rows, key=lambda x: (x["tag"] == "stale", -x["score"]))
 
+# V2: 题数动态化(兼容旧 report_data.json)
+TOTAL = max((r.get("total", 70) for r in rows), default=70)
+
+# V2: 题数动态化(兼容旧 report_data.json)
+TOTAL = max((r.get("total", 70) for r in rows), default=70)
+
 gen_time = "2026-08-26 15:09 (GMT+8)"
 fully = DATA["fully_done"]
 total_models = DATA["n_models"]
@@ -66,10 +72,10 @@ def row_html(r, idx):
         <div class="bar" style="width:{r['bar_w']}%;background:linear-gradient(90deg,{r['color']}cc,{r['color']})"></div>
         <span class="score">{r['score']}</span>
       </div>
-      <div class="ring" title="完成 {r['ok']}/80">
+      <div class="ring" title="完成 {r['ok']}/{TOTAL}">
         {ring_svg(r['pct'], r['color'])}
       </div>
-      <div class="pill" style="color:{r['color']};border-color:{r['color']}55;background:{r['color']}1a">{tag_label} · {r['ok']}/80</div>
+      <div class="pill" style="color:{r['color']};border-color:{r['color']}55;background:{r['color']}1a">{tag_label} · {r['ok']}/{TOTAL}</div>
       <div class="miss">{miss}{mt_html}</div>
       {note}
     </div>'''
@@ -95,9 +101,9 @@ cards_html = "\n".join(
     </div>''' for c in cards)
 
 # 图例
-legend = '''
+legend = f'''
 <div class="legend">
-  <span><i style="background:#31C476"></i>已完成 80/80</span>
+  <span><i style="background:#31C476"></i>已完成 {TOTAL}/{TOTAL}</span>
   <span><i style="background:#F5C518"></i>部分完成</span>
   <span><i style="background:#FF8A4C"></i>通道阻塞</span>
   <span><i style="background:#FF5C7A"></i>旧数据·需重跑</span>
@@ -162,7 +168,7 @@ html = f'''<!DOCTYPE html>
 <div class="wrap">
   <header>
     <h1>Relay 中转站 · <span class="accent">模型能力横评</span> 最终报告</h1>
-    <div class="sub">80 题 / 150 分权威题组 · 生成时间 {gen_time} · 数据源 final80_results.jsonl（已清洗 model="1" 污染）</div>
+    <div class="sub">{TOTAL} 题 / 150 分权威题组 (V2) · 生成时间 {gen_time} · 数据源 final80_results.jsonl（已清洗 model="1" 污染）</div>
   </header>
   <div class="cards">{cards_html}</div>
   {legend}
@@ -170,9 +176,9 @@ html = f'''<!DOCTYPE html>
     {rows_html}
   </div>
   <footer>
-    <p><b>说明</b>：分数 = 80 题加权得分总和（满分约 12000）。横条长度按当前最高分 {int(max_score)} 归一。</p>
+    <p><b>说明</b>：分数 = {TOTAL} 题加权得分总和（满分 150）。横条长度按当前最高分 {int(max_score)} 归一。</p>
     <p><b>阻塞模型</b>：HY-3 / Mimo-v2.5 / Kimi-K3 当前因 de5 坏窗口（模型 500 + 裁判 503）或通道全死而补不完，其缺口题将在窗口恢复后自动续跑。</p>
-    <p><b>旧数据</b>：GPT-4o、Qwen3.8-Max 显示为 0/80 是早期空响应误判为 0 分的垃圾数据，并非真实失败，需重跑取真实分。</p>
+    <p><b>旧数据</b>：GPT-4o、Qwen3.8-Max 显示为 0/{TOTAL} 是早期空响应误判为 0 分的垃圾数据，并非真实失败，需重跑取真实分。</p>
   </footer>
 </div>
 </body>

@@ -7,6 +7,7 @@ QFILE = os.path.join(HERE, "final80_qs.json")
 
 data = json.load(open(QFILE, encoding="utf-8"))
 all_qids = [q["qid"] for q in data["questions"]]
+TOTAL = len(all_qids)  # V2: 70
 
 recs = []
 with open(RES, encoding="utf-8") as f:
@@ -22,8 +23,11 @@ with open(RES, encoding="utf-8") as f:
 ok_qids = defaultdict(set)
 status_by_mq = {}
 score_sum = defaultdict(float)
+qset = set(all_qids)  # V2: 只统计题库内的题(排除已删题/旧记录)
 for r in recs:
     m = r.get("model"); q = r.get("qid"); st = r.get("status")
+    if q not in qset:
+        continue
     status_by_mq[(m, q)] = st
     if st == "ok":
         ok_qids[m].add(q)
@@ -37,7 +41,7 @@ MODELS = ["oc/hy-3", "nvidia/minimax-m3", "nvidia/deepseek-v4-flash-0731", "gpt-
           "kimi-k2.7-code", "deepseek-v4-flash", "deepseek-v4-flash-vision-exp", "deepseek-v4-pro",
           "glm-5.2", "mistral-large-latest", "nvidia/deepseek-v4-flash-0731"]
 
-print(f"{'MODEL':28} {'OK':>4}/80  {'总分':>8}  {'未完成'}")
+print(f"{'MODEL':28} {'OK':>4}/{TOTAL}  {'总分':>8}  {'未完成'}")
 print("-" * 90)
 rows = []
 for m in MODELS:
@@ -49,9 +53,9 @@ for m in MODELS:
 rows.sort(key=lambda x: -x[2])
 for m, n, tot, missing in rows:
     miss = ",".join(missing) if missing else "—"
-    print(f"{m:28} {n:>4}/80  {tot:>8}  {miss}")
+    print(f"{m:28} {n:>4}/{TOTAL}  {tot:>8}  {miss}")
 print("-" * 90)
 
 # 汇总整体完成度
-fully = [m for m, n, tot, miss in rows if n == 80]
-print(f"完全完成(80/80)的模型数: {len(fully)} / {len(rows)}")
+fully = [m for m, n, tot, miss in rows if n == TOTAL]
+print(f"完全完成({TOTAL}/{TOTAL})的模型数: {len(fully)} / {len(rows)}")

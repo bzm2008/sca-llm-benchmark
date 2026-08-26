@@ -8,6 +8,7 @@ OUT = os.path.join(HERE, "report_data.json")
 
 data = json.load(open(QFILE, encoding="utf-8"))
 all_qids = [q["qid"] for q in data["questions"]]
+TOTAL = len(all_qids)  # V2: 70
 qmeta = {q["qid"]: q for q in data["questions"]}
 
 recs = []
@@ -26,9 +27,10 @@ status_by_mq = {}
 score_sum = defaultdict(float)
 # best score per (model,qid) regardless, plus last status
 best_score = defaultdict(float)
+qset = set(all_qids)  # V2: 只统计题库内的题
 for r in recs:
     m = r.get("model"); q = r.get("qid"); st = r.get("status")
-    if m == "1" or m == 1:
+    if m == "1" or m == 1 or q not in qset:
         continue
     status_by_mq[(m, q)] = st
     if st == "ok":
@@ -94,7 +96,7 @@ for m in MODELS:
         "model": m,
         "pretty": pretty(m),
         "ok": n,
-        "total": 80,
+        "total": TOTAL,
         "score": tot,
         "missing": missing,
         "miss_types": miss_types,
@@ -124,6 +126,6 @@ with open(OUT, "w", encoding="utf-8") as f:
     json.dump(out, f, ensure_ascii=False, indent=2)
 
 print("已导出 report_data.json, 模型数:", len(rows))
-print("完全完成 80/80:", out["fully_done"])
+print(f"完全完成 {TOTAL}/{TOTAL}:", out["fully_done"])
 for r in rows:
-    print(f"  {r['pretty']:20} {r['ok']:>3}/80  {r['score']:>8}  [{r['tag']}]")
+    print(f"  {r['pretty']:20} {r['ok']:>3}/{TOTAL}  {r['score']:>8}  [{r['tag']}]")
