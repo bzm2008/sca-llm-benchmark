@@ -1,6 +1,6 @@
 ---
 name: relay-capability-test
-description: 对任意 OpenAI 兼容中转站/Relay 的多个模型做横向能力评测。主流程使用 80 题 / 150 分权威题组（自建工程题 + OpenBench HumanEval/GPQA/MMLU + SWE-bench + AIME + MATH-500 + MMLU-Pro + OpenCompass 体系），输出自包含 HTML 报告（内联 SVG 排名图/分组柱状图/雷达图/逐题热力图/耗时与报错对比）+ 文字分析（各模型优缺点 + 时间性价比总结）。含断点续测、429/400/401/402/503/524 分类退避与快速失败、代码沙箱执行、轻量裁判打分。当用户要求"测这几个模型的能力/跑一遍能力测试/对比模型强弱/出图表报告"时使用。与 relay-probe（边界探测）互补。
+description: 对任意 OpenAI 兼容中转站/Relay 的多个模型做横向能力评测。主流程使用 70 题 / 150 分权威题组 V2（自建工程题 + OpenBench HumanEval/GPQA/MMLU + SWE-bench + AIME + MATH-500 + MMLU-Pro + OpenCompass 体系，基于实测得分率删减过易题、加权超难题以增强模型区分度），输出自包含 HTML 报告（内联 SVG 排名图/分组柱状图/雷达图/逐题热力图/耗时与报错对比）+ 文字分析（各模型优缺点 + 时间性价比总结）。含断点续测、429/400/401/402/503/524 分类退避与快速失败、代码沙箱执行、轻量裁判打分。当用户要求"测这几个模型的能力/跑一遍能力测试/对比模型强弱/出图表报告"时使用。与 relay-probe（边界探测）互补。
 ---
 
 # relay-capability-test 多模型能力评测
@@ -8,7 +8,7 @@ description: 对任意 OpenAI 兼容中转站/Relay 的多个模型做横向能�
 ## 适用场景
 给定中转站 endpoint + key + 一批模型名，要横向对比各模型真实能力并出"图表+文字报告"。
 
-## 快速开始（新题组：80 题 / 150 分）
+## 快速开始（V2 题组：70 题 / 150 分）
 ```bash
 python scripts/capability_test_final.py                          # 跑 ALL_MODELS 全量(串行)
 python scripts/capability_test_final.py MODEL_A MODEL_B          # 指定模型; 跑完自动生成报告
@@ -18,20 +18,21 @@ python scripts/capability_test_final.py M1 M2 M3 --parallel 5    # 并行: 线�
 ```
 - **并行模式**：`--parallel N` 用 `ThreadPoolExecutor` 按模型分组调度（每模型 1 个 worker，worker 内保持题目顺序，同模型不乱序）。de5.net 实测限流 188 req/min / 625k tokens/min，60+ 并发可成功，而串行只用到 ~0.5%——**瓶颈是模型生成延迟而非中转站**，10 路并发约提速 10 倍仍远低于上限。fixture 用 `tempfile.mkdtemp()` 每调用独立目录，线程安全；`log`/`save_result` 已加锁。429 各 worker 独立退避互不阻塞。
 - 改脚本顶部 `KEY / BASE / ALL_MODELS / JUDGE` 适配新中转站（当前默认 de5.net）。
-- **唯一数据源**：`scripts/final80_qs.json`（80 道真实题，seed 固定，选项已打乱落盘）。审阅看到的题 = 实际跑的题。
+- **唯一数据源**：`scripts/final80_qs.json`（文件名沿 V1 未改，实为 **70 道** V2 题，seed 固定，选项已打乱落盘）。审阅看到的题 = 实际跑的题。
 - **题组规格**：`scripts/question_bank_final.md`（分值明细、判分协议、难度与权威性、局限声明）。
 - 原始数据：`final80_results.jsonl`（按 model+qid 追加，天然断点续测）。每条含 `score`(判分器 0-100 率)/`elapsed`(单题耗时)/`ttft`(首字延迟)/`status`(ok 或 错误分类)/`detail`/`answer`。
 - 报告生成：`python scripts/capability_report_final.py` → `capability_report_final.html`（自包含，无外部依赖，离线可开）。注意：报告聚合时**实际得分 = 判分器分/100 × 题面分值**，不能直接累加 jsonl 里的 score 字段。
 
 ## 关键设计（勿随意删改）
-- **题组构成（80 题 / 150 分，高难占比 82.5%）**：
-  - 自建工程题 32（50 分）：并发/异步/幂等/持久化/故障恢复/代码审查/多文件项目，按隐藏测试通过率判分。
-  - OpenBench 核心 17（40 分）：HumanEval×5（官方 test 沙箱）、GPQA-Diamond×6（四选一）、MMLU×6（四选一）。
-  - SWE-bench Lite 7（21 分）：真实 repo issue + gold patch 元数据，静态 rubric（文件命中 50% + 函数符号 30% + patch 结构 20%）。
-  - AIME 2025 4（12 分）：竞赛数学，数字精确。
+- **题组构成（V2：70 题 / 150 分）**：
+  - 自建工程题 32（60 分）：并发/异步/幂等/持久化/故障恢复/代码审查/多文件项目，按隐藏测试通过率判分。超难档 P16-18=4、L06=5、W04=5、M02-04=4（V2 加权）。
+  - OpenBench 核心 11（30 分）：HumanEval×4（官方 `check(candidate)` 沙箱）、GPQA-Diamond×4（四选一，K3=5 K5=6 其余 4）、MMLU×3（四选一）。
+  - SWE-bench Lite 7（27 分）：真实 repo issue + gold patch 元数据，静态 rubric（文件命中 50% + 函数符号 30% + patch 结构 20%），SW1-6=4 SW7=3。
+  - AIME 2025 3（9 分）：竞赛数学，数字精确。
   - MATH-500 7（14 分）：LaTeX 归一化。
-  - MMLU-Pro 8（8 分）/ OpenCompass 体系 5（5 分）：四选一。
-- **判分**：数值精确 / 代码沙箱执行比对（HumanEval 官方 test 逐断言）/ 关键词+rubric 裁判（`ministral-8b-latest`，0-100）/ 选择题单字母 / SWE 静态 rubric。
+  - MMLU-Pro 6（6 分）/ OpenCompass 体系 4（4 分）：四选一。
+- **V2 重构原则**（2026-08-26）：基于实测得分率删过易题（满分率≥84.7% 无区分度）、加权超难题（+19 分），体现模型差异性。当前维度占比：编程 29题/63分(42%) / Linux 6/10.5 / 写作 4/8 / 数学 14/36.5 / 知识 17/32。删题分析工具：`scripts/analyze_difficulty.py`（按已作答模型统计满分率，未作答不计入正确率）。
+- **判分**：数值精确 / 代码沙箱执行比对（HumanEval 官方 `check(candidate)`）/ 关键词+rubric 裁判（`ministral-8b-latest`，0-100）/ 选择题单字母 / SWE 静态 rubric。
 - **断点续测**：启动时加载 `final80_results.jsonl`，`status==ok` 跳过；同 (model,qid) 去重取最后一条。
 - **错误分类**：
   - `429` → 限流，指数退避（45s 起步）。
@@ -129,3 +130,12 @@ Windows 环境后台任务（`run_in_background`）的 `rm -f` 走 safe-delete s
 - 进程检测复用坑位：`Get-CimInstance` + `Name -like 'python*'` 限定（防 powershell 自匹配）。
 **首轮误杀教训**：看门狗启动时若结果文件早已停滞（旧进程死后的遗留 mtime），会把**刚由人重启的进程**误判为卡死杀掉（resume 跳过阶段不写文件，mtime 判断失真）。修复：`proc_alive` 返回最年轻进程的 `CreationDate`，进程创建 <STALE_MIN 分钟则跳过卡死判定（日志"进程刚启动不判卡死"）。
 **建议**：WorkBuddy 自动化任务可保留 ACTIVE 作双保险（prompt 需含"进程存活则不起"防重复拉起），但主可靠性以本机看门狗为准。
+
+### 坑位 17 · 判分器自身 bug 导致"全模型 0 分"（V1 已修，2026-08-26）
+报告热力图出现整列无得分时，先怀疑**判分器/题面测试**而非模型能力（19 模型全 0 几乎不可能是 19 个模型同时答错）。实测抓到三类：
+1. **测试与题面矛盾**（P09）：题面声明 operations 为 `(op,path,value)` 三元组，但测试里 delete 传了二元组 `("delete",path)` → 按题面实现三元组解包的模型在 delete 处 `ValueError` 崩。修：测试数据与题面保持一致。
+2. **测试表达式类型错误**（P09 末行）：`ok += r2=={...} and ({...dict...})` —— `and` 后接裸字典，True 时返回 dict，`ok += dict` 抛 `TypeError`，**整个判分脚本崩掉，所有模型 0 分**。修：表达式必须是布尔。
+3. **HumanEval 判分器只 eval 1 个 assert**（OB-C2）：旧实现用 `ast.walk` 提取 check() 里的 assert 节点，但循环体内的 assert 只有 1 个节点、且 eval 时缺循环局部变量 → **官方正确解也得 0/1**。修：改为真正执行 `check(candidate)`（成功=100，AssertionError=0）。
+4. **答案键标错**（OB-M4）：MMLU 题 answer_key='B'，但 19/19 模型独立答 A（并联电阻电流更大）→ 键错。**全模型收敛到同一非标准答案 = 强信号键错了**，需人工核对原题。
+5. **数据坑**：runner 只存 `answer[:500]`（V1 改 [:4000]）——答案被截断后无法事后复判，且 `_run_asserts` 对无闭合围栏的截断答案会 exec 崩溃（V1 加"剥离开头围栏"兜底）。
+**排查套路**：取一个强模型的完整答案，用真实判分器重跑 → 若"正确解"也 0 分，就是判分器 bug；修完用 `regression_check.py` 回归（P09 完整正确解 7/7、OB-C2 官方解 check-pass、OB-M4 答 A=100）。
