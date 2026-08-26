@@ -17,29 +17,35 @@ DEAD = {"anthropic/claude-sonnet-4.6", "gpt-4o", "qwen3.8-max"}
 
 # ---------- 题面分值 & 维度映射 ----------
 def build_point_map():
+    """70 题 / 150 分 V2 分值映射（删 10 道简单题 + 超难题加权）。"""
     pm = {}
     for q in ['P0'+str(i) for i in range(1,5)]: pm[q]=0.5
     for q in ['P0'+str(i) for i in range(5,10)]: pm[q]=1
     for q in ['P'+str(i) for i in range(10,16)]: pm[q]=1.5
-    for q in ['P16','P17','P18']: pm[q]=3
-    for q in ['L01']: pm[q]=0.5
-    for q in ['L02','L03']: pm[q]=1
-    for q in ['L04','L05']: pm[q]=1.5
-    for q in ['L06']: pm[q]=3
-    for q in ['W01']: pm[q]=0.5
-    for q in ['W02']: pm[q]=1
-    for q in ['W03']: pm[q]=1.5
-    for q in ['W04']: pm[q]=3
-    for q in ['M01']: pm[q]=1.5
-    for q in ['M02','M03','M04']: pm[q]=3
-    for i in range(1,6): pm[f'OB-C{i}']=2
-    for i in range(1,7): pm[f'OB-K{i}']=4
-    for i in range(1,7): pm[f'OB-M{i}']=1
-    for i in range(1,8): pm[f'SW{i}']=3
-    for i in range(1,5): pm[f'AI{i}']=3
+    for q in ['P16','P17','P18']: pm[q]=4          # 超难加权 3→4
+    pm['L01']=0.5; pm['L02']=1; pm['L03']=1; pm['L04']=1.5; pm['L05']=1.5
+    pm['L06']=5                                     # 超难加权 3→5
+    pm['W01']=0.5; pm['W02']=1; pm['W03']=1.5
+    pm['W04']=5                                     # 超难加权 3→5
+    pm['M01']=1.5
+    for q in ['M02','M03','M04']: pm[q]=4           # 超难加权 3→4
+    # HumanEval: 删 OB-C4, 剩 4 题各 2 分
+    for i in [1,2,3,5]: pm[f'OB-C{i}']=2            # OB-C4 已删
+    # GPQA: 删 OB-K4/K6, K3→5 K5→6 其余 4 分
+    pm['OB-K1']=4; pm['OB-K2']=4; pm['OB-K3']=5; pm['OB-K5']=6  # K4/K6 已删
+    # MMLU: 删 OB-M1/M3/M6, 剩 M2/M4/M5 各 1 分
+    for i in [2,4,5]: pm[f'OB-M{i}']=1              # M1/M3/M6 已删
+    # SWE-bench: SW1-6 加权 3→4, SW7 保持 3
+    for i in range(1,7): pm[f'SW{i}']=4             # SW1-6 各 4
+    pm['SW7']=3                                     # SW7 保持 3
+    # AIME: 删 AI2, 剩各 3 分
+    for i in [1,3,4]: pm[f'AI{i}']=3                # AI2 已删
+    # MATH-500: 不变, 各 2 分
     for i in range(1,8): pm[f'MH{i}']=2
-    for i in range(1,9): pm[f'MP{i}']=1
-    for i in range(1,6): pm[f'OC{i}']=1
+    # MMLU-Pro: 删 MP1/MP8, 剩各 1 分
+    for i in [2,3,4,5,6,7]: pm[f'MP{i}']=1          # MP1/MP8 已删
+    # OpenCompass: 删 OC3, 剩各 1 分
+    for i in [1,2,4,5]: pm[f'OC{i}']=1              # OC3 已删
     return pm
 
 POINT = build_point_map()
@@ -50,8 +56,9 @@ def dim_of(qid):
     if qid.startswith("P") or qid.startswith("OB-C") or qid.startswith("SW"): return "编程"
     if qid.startswith("L"): return "Linux系统"
     if qid.startswith("W"): return "写作"
-    if qid.startswith("M") or qid.startswith("AI") or qid.startswith("MH"): return "数学推理"
+    # 注意: MP 以 M 开头, 必须在 M 之前判断, 否则被误归数学推理
     if qid.startswith("OB-K") or qid.startswith("OB-M") or qid.startswith("MP") or qid.startswith("OC"): return "知识科学"
+    if qid.startswith("M") or qid.startswith("AI") or qid.startswith("MH"): return "数学推理"
     return "知识科学"
 
 # 维度满分

@@ -1,26 +1,31 @@
-# 多模型能力评测题库 FINAL：80 题 / 满分 150
+# 多模型能力评测题库 V2：70 题 / 满分 150
 
-> 状态：**待用户审阅**，确认前不启动正式测试。
+> 状态：**V2 已重构**（2026-08-26），基于 V1 的 19 模型实测得分率，删除 10 道满分率≥84.7% 的过易题（无区分度），释放的 19 分加权到超难题以提升差异性。
 >
-> 定位：高难度、权威基准主导的横向评测。82.5% 题目落在高/超难档；权威基准题（OpenBench + SWE-bench + AIME + MATH + MMLU-Pro + OpenCompass）48 题 / 100 分，占 2/3 权重；自建工程题 32 题 / 50 分考察真实工程落地。
+> 定位：高难度、权威基准主导的横向评测。权威基准题 38 题 / 100 分（占 2/3 权重）；自建工程题 32 题 / 50 分考察真实工程落地。
 > 所有权威题均为**真实基准题**（seed=20260824 固定抽取落盘），非编造、非改编。
 
 ## 1. 总览
 
 | 题组 | 来源 | 题数 | 分值 | 单题分 | 难度 |
 |---|---:|---:|---:|---:|---|
-| 自建工程题 | 自定义（隐藏测试/rubric） | 32 | 50 | 0.5~3 | 低6 中8 高10 超难8 |
-| OpenBench 核心 | HumanEval 5 + GPQA-Diamond 6 + MMLU 6 | 17 | 40 | 1~4 | 高/超难 |
-| SWE-bench Lite | 真实仓库 issue 修复 | 7 | 21 | 3 | 超难 |
+| 自建工程题 | 自定义（隐藏测试/rubric） | 32 | 50 | 0.5~5 | 低6 中8 高10 超难8 |
+| OpenBench 核心 | HumanEval 4 + GPQA-Diamond 4 + MMLU 3 | 11 | 28 | 1~6 | 高/超难 |
+| SWE-bench Lite | 真实仓库 issue 修复 | 7 | 27 | 3~4 | 超难 |
 | MATH-500 | 竞赛数学（L4-5 为主） | 7 | 14 | 2 | 高 |
-| AIME 2025 | 竞赛数学（I/II 卷） | 4 | 12 | 3 | 超难 |
-| MMLU-Pro | 知识推理（8 学科） | 8 | 8 | 1 | 高 |
-| OpenCompass 体系 | C-Eval 2 + CMMLU 3 | 5 | 5 | 1 | 高 |
-| **合计** | — | **80** | **150** | — | 高41 超难25（82.5%） |
+| AIME 2025 | 竞赛数学（I/II 卷） | 3 | 9 | 3 | 超难 |
+| MMLU-Pro | 知识推理（6 学科） | 6 | 6 | 1 | 高 |
+| OpenCompass 体系 | C-Eval 2 + CMMLU 2 | 4 | 4 | 1 | 高 |
+| **合计** | — | **70** | **150** | — | 高难度为主 |
+
+### V1→V2 变更
+- **删除 10 题**（满分率≥84.7%，无区分度）：OB-C4(编程100%) / OB-K4,OB-K6(GPQA 94.7%) / OB-M1,OB-M3,OB-M6(MMLU 94.7%) / OC3(CMMLU 94.7%) / AI2(AIME 94.7%) / MP1,MP8(MMLU-Pro 94.7%)
+- **超难题加权**（+19 分）：P16/P17/P18(3→4) / SW1-SW6(3→4) / L06(3→5) / M02/M03/M04(3→4) / W04(3→5) / OB-K5(4→6) / OB-K3(4→5)
+- **维度占比调整**：编程 37%→42%（↑区分度），知识科学 23%→21%（↓过易题）
 
 ## 2. 分值明细
 
-### 2.1 自建工程题 32 题 = 50 分（难度档赋分：低 0.5 / 中 1 / 高 1.5 / 超难 3）
+### 2.1 自建工程题 32 题 = 50 分（V2 超难题加权：低 0.5 / 中 1 / 高 1.5 / 超难 4-5）
 
 | ID | 题名 | 维度 | 难度 | 分值 |
 |---|---|---|---|---|
@@ -39,41 +44,41 @@
 | P13 | IdempotentEventProcessor | 编程 | 高 | 1.5 |
 | P14 | repair_bounded_queue | 编程 | 高 | 1.5 |
 | P15 | write_through_store | 编程 | 高 | 1.5 |
-| P16 | DurableTaskQueue | 编程 | 超难 | 3 |
-| P17 | MiniRaftLog | 编程 | 超难 | 3 |
-| P18 | review_and_harden_service | 编程 | 超难 | 3 |
+| P16 | DurableTaskQueue | 编程 | 超难 | **4** |
+| P17 | MiniRaftLog | 编程 | 超难 | **4** |
+| P18 | review_and_harden_service | 编程 | 超难 | **4** |
 | L01 | safe_find_logs | Linux | 低 | 0.5 |
 | L02 | log_agg_pipeline | Linux | 中 | 1 |
 | L03 | git_recover_keep_changes | Linux | 中 | 1 |
 | L04 | cpu_spike_diagnosis | Linux | 高 | 1.5 |
 | L05 | disk_space_mismatch | Linux | 高 | 1.5 |
-| L06 | network_timeout_decision | Linux | 超难 | 3 |
+| L06 | network_timeout_decision | Linux | 超难 | **5** |
 | W01 | maintenance_notice | 写作 | 低 | 0.5 |
 | W02 | incident_review | 写作 | 中 | 1 |
 | W03 | adr_decision | 写作 | 高 | 1.5 |
-| W04 | exec_briefing | 写作 | 超难 | 3 |
+| W04 | exec_briefing | 写作 | 超难 | **5** |
 | M01 | cache_hit_probability | 数学/推理 | 高 | 1.5 |
-| M02 | concurrent_register | 数学/推理 | 超难 | 3 |
-| M03 | exactly_once_boundary | 数学/推理 | 超难 | 3 |
-| M04 | counterexample_concurrency | 数学/推理 | 超难 | 3 |
+| M02 | concurrent_register | 数学/推理 | 超难 | **4** |
+| M03 | exactly_once_boundary | 数学/推理 | 超难 | **4** |
+| M04 | counterexample_concurrency | 数学/推理 | 超难 | **4** |
 
-### 2.2 OpenBench 核心 17 题 = 40 分
+### 2.2 OpenBench 核心 11 题 = 28 分（V2：删 OB-C4/K4/K6/M1/M3/M6，K3/K5 加权）
 
-| ID | 来源 | 单题分 | 小计 |
-|---|---|---|---|
-| OB-C1~C5 | HumanEval（官方 test 沙箱判 pass） | 2 | 10 |
-| OB-K1~K6 | GPQA-Diamond（四选一） | 4 | 24 |
-| OB-M1~M6 | MMLU（四选一） | 1 | 6 |
+| ID | 来源 | 题数 | 单题分 | 小计 |
+|---|---|---:|---:|---:|
+| OB-C1,C2,C3,C5 | HumanEval（官方 `check(candidate)` 沙箱判 pass） | 4 | 2 | 8 |
+| OB-K1,K2,K3,K5 | GPQA-Diamond（四选一），K3=5 K5=6 其余 4 | 4 | 4~6 | 19 |
+| OB-M2,M4,M5 | MMLU（四选一） | 3 | 1 | 3 |
 
-### 2.3 新增权威 31 题 = 60 分
+### 2.3 新增权威 27 题 = 72 分（V2：删 AI2/MP1/MP8/OC3，SWE/AIME 加权）
 
 | ID | 来源 | 题数 | 单题分 | 小计 | 判分 |
 |---|---|---:|---:|---:|---|
-| SW1~SW7 | SWE-bench Lite（7 个真实 repo issue） | 7 | 3 | 21 | 静态 rubric（文件命中50% + 函数符号30% + patch 结构20%） |
-| AI1~AI4 | AIME 2025 I/II 卷 | 4 | 3 | 12 | 数字精确匹配（000-999） |
+| SW1~SW7 | SWE-bench Lite（7 个真实 repo issue），SW1-6=4 SW7=3 | 7 | 3~4 | 27 | 静态 rubric（文件命中50% + 函数符号30% + patch 结构20%） |
+| AI1,AI3,AI4 | AIME 2025 I/II 卷（删 AI2） | 3 | 3 | 9 | 数字精确匹配（000-999） |
 | MH1~MH7 | MATH-500（Level 4-5） | 7 | 2 | 14 | LaTeX 答案归一化匹配 |
-| MP1~MP8 | MMLU-Pro（8 学科） | 8 | 1 | 8 | 选项字母精确匹配 |
-| OC1~OC5 | OpenCompass 体系（C-Eval 2 + CMMLU 3） | 5 | 1 | 5 | 选项字母精确匹配 |
+| MP2~MP7 | MMLU-Pro（6 学科，删 MP1/MP8） | 6 | 1 | 6 | 选项字母精确匹配 |
+| OC1,OC2,OC4,OC5 | OpenCompass 体系（C-Eval 2 + CMMLU 2，删 OC3） | 4 | 1 | 4 | 选项字母精确匹配 |
 
 ## 3. 判分协议
 

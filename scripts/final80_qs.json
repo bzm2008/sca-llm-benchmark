@@ -465,21 +465,6 @@
    "dim": "code"
   },
   {
-   "qid": "OB-C4",
-   "src": "OpenBench/HumanEval",
-   "task_id": "HumanEval/78",
-   "lvl": "高",
-   "type": "code",
-   "entry_point": "hex_key",
-   "question": "\ndef hex_key(num):\n    \"\"\"You have been tasked to write a function that receives \n    a hexadecimal number as a string and counts the number of hexadecimal \n    digits that are primes (prime number, or a prime, is a natural number \n    greater than 1 that is not a product of two smaller natural numbers).\n    Hexadecimal digits are 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F.\n    Prime numbers are 2, 3, 5, 7, 11, 13, 17,...\n    So you have to determine a number of the following digits: 2, 3, 5, 7, \n    B (=decimal 11), D (=decimal 13).\n    Note: you may assume the input is always correct or empty string, \n    and symbols A,B,C,D,E,F are always uppercase.\n    Examples:\n    For num = \"AB\" the output should be 1.\n    For num = \"1077E\" the output should be 2.\n    For num = \"ABED1A33\" the output should be 4.\n    For num = \"123456789ABCDEF0\" the output should be 6.\n    For num = \"2020\" the output should be 2.\n    \"\"\"\n",
-   "test": "def check(candidate):\n\n    # Check some simple cases\n    assert candidate(\"AB\") == 1, \"First test error: \" + str(candidate(\"AB\"))      \n    assert candidate(\"1077E\") == 2, \"Second test error: \" + str(candidate(\"1077E\"))  \n    assert candidate(\"ABED1A33\") == 4, \"Third test error: \" + str(candidate(\"ABED1A33\"))      \n    assert candidate(\"2020\") == 2, \"Fourth test error: \" + str(candidate(\"2020\"))  \n    assert candidate(\"123456789ABCDEF0\") == 6, \"Fifth test error: \" + str(candidate(\"123456789ABCDEF0\"))      \n    assert candidate(\"112233445566778899AABBCCDDEEFF00\") == 12, \"Sixth test error: \" + str(candidate(\"112233445566778899AABBCCDDEEFF00\"))  \n\n\n    # Check some edge cases that are easy to work out by hand.\n    assert candidate([]) == 0\n\n",
-   "expected": "official_test",
-   "answer_key": null,
-   "options": null,
-   "score": 2.0,
-   "dim": "code"
-  },
-  {
    "qid": "OB-C5",
    "src": "OpenBench/HumanEval",
    "task_id": "HumanEval/133",
@@ -594,39 +579,6 @@
    "dim": "knowledge"
   },
   {
-   "qid": "OB-K4",
-   "src": "OpenBench/GPQA-Diamond",
-   "task_id": "recNuT2oSnO86bxOx",
-   "lvl": "超难",
-   "type": "choice",
-   "entry_point": null,
-   "question": "benzene is treated with HNO3 and H2SO4, forming product 1.\nproduct 1 is treated with Br2 and iron powder, forming product 2.\nproduct 2 is stirred with Pd/C under a hydrogen atmosphere, forming product 3.\nProduct 3 is treated with NaNO2 and HBF4, forming product 4.\nProduct 4 is heated and then treated with anisole, forming final product 5.",
-   "test": null,
-   "expected": "3-bromo-4'-methoxy-1,1'-biphenyl",
-   "answer_key": "C",
-   "options": [
-    [
-     "A",
-     "4-bromo-4'-methoxy-1,1'-biphenyl"
-    ],
-    [
-     "B",
-     "3-bromo-4'-fluoro-1,1'-biphenyl"
-    ],
-    [
-     "C",
-     "3-bromo-4'-methoxy-1,1'-biphenyl"
-    ],
-    [
-     "D",
-     "3'-bromo-2-methoxy-1,1'-biphenyl"
-    ]
-   ],
-   "domain": "Chemistry",
-   "score": 4.0,
-   "dim": "knowledge"
-  },
-  {
    "qid": "OB-K5",
    "src": "OpenBench/GPQA-Diamond",
    "task_id": "recnTTKdBzfuoZ7w7",
@@ -660,73 +612,6 @@
    "dim": "knowledge"
   },
   {
-   "qid": "OB-K6",
-   "src": "OpenBench/GPQA-Diamond",
-   "task_id": "recBtVK8rBVtIlXDq",
-   "lvl": "超难",
-   "type": "choice",
-   "entry_point": null,
-   "question": "\"Oh, I know you,\" the ribonucleoprotein particle says to the nascent chain as they meet. \"Pause there for a minute. Let me show you in; you really need some sugar.\"\n\"It seems somewhat rough. I guess this is goodbye; I need to be on my way\", the chain replies. Where did they meet, and where is the chain heading?",
-   "test": null,
-   "expected": "cytosol to the extracellular space",
-   "answer_key": "D",
-   "options": [
-    [
-     "A",
-     "ribosome to the proteasome"
-    ],
-    [
-     "B",
-     "Golgi to the mitochondrion"
-    ],
-    [
-     "C",
-     "membrane to the nucleus"
-    ],
-    [
-     "D",
-     "cytosol to the extracellular space"
-    ]
-   ],
-   "domain": "Biology",
-   "score": 4.0,
-   "dim": "knowledge"
-  },
-  {
-   "qid": "OB-M1",
-   "src": "OpenBench/MMLU",
-   "task_id": "abstract_algebra",
-   "lvl": "高",
-   "type": "choice",
-   "entry_point": null,
-   "question": "If A = {1, 2, 3} then relation S = {(1, 1), (2, 2)} is",
-   "test": null,
-   "expected": "both symmetric and anti-symmetric",
-   "answer_key": "B",
-   "options": [
-    [
-     "A",
-     "symmetric only"
-    ],
-    [
-     "B",
-     "both symmetric and anti-symmetric"
-    ],
-    [
-     "C",
-     "an equivalence relation"
-    ],
-    [
-     "D",
-     "anti-symmetric only"
-    ]
-   ],
-   "subject": "abstract_algebra",
-   "_ans_letter": "C",
-   "score": 1.0,
-   "dim": "knowledge"
-  },
-  {
    "qid": "OB-M2",
    "src": "OpenBench/MMLU",
    "task_id": "formal_logic",
@@ -757,40 +642,6 @@
    ],
    "subject": "formal_logic",
    "_ans_letter": "D",
-   "score": 1.0,
-   "dim": "knowledge"
-  },
-  {
-   "qid": "OB-M3",
-   "src": "OpenBench/MMLU",
-   "task_id": "college_computer_science",
-   "lvl": "高",
-   "type": "choice",
-   "entry_point": null,
-   "question": "If p(x) is the minimal-degree interpolating polynomial for the real-valued function f(x) at the n + 1 distinct real numbers x0, .... xn what is the maximum possible degree of p(x)?",
-   "test": null,
-   "expected": "n",
-   "answer_key": "D",
-   "options": [
-    [
-     "A",
-     "n + 1"
-    ],
-    [
-     "B",
-     "n + 2"
-    ],
-    [
-     "C",
-     "2n"
-    ],
-    [
-     "D",
-     "n"
-    ]
-   ],
-   "subject": "college_computer_science",
-   "_ans_letter": "A",
    "score": 1.0,
    "dim": "knowledge"
   },
@@ -858,40 +709,6 @@
     ]
    ],
    "subject": "high_school_computer_science",
-   "_ans_letter": "B",
-   "score": 1.0,
-   "dim": "knowledge"
-  },
-  {
-   "qid": "OB-M6",
-   "src": "OpenBench/MMLU",
-   "task_id": "college_biology",
-   "lvl": "高",
-   "type": "choice",
-   "entry_point": null,
-   "question": "The first groups of animals to develop lung tissue adequate to support their respiratory requirements without the use of supplementary gas exchange organs were the",
-   "test": null,
-   "expected": "reptiles",
-   "answer_key": "A",
-   "options": [
-    [
-     "A",
-     "reptiles"
-    ],
-    [
-     "B",
-     "mammals"
-    ],
-    [
-     "C",
-     "trematoda"
-    ],
-    [
-     "D",
-     "amphibians"
-    ]
-   ],
-   "subject": "college_biology",
    "_ans_letter": "B",
    "score": 1.0,
    "dim": "knowledge"
@@ -1085,20 +902,6 @@
    "options": null
   },
   {
-   "qid": "AI2",
-   "src": "AIME2025",
-   "title": "AIME2025-II Q?",
-   "lvl": "超难",
-   "dim": "math",
-   "type": "num",
-   "score": 3.0,
-   "question": "Find the sum of all positive integers $ n $ such that $ n + 2 $ divides the product $ 3(n + 3)(n^2 + 9) $.",
-   "expected": "49",
-   "judge": "数字精确匹配(000-999整数)",
-   "answer_key": null,
-   "options": null
-  },
-  {
    "qid": "AI3",
    "src": "AIME2025",
    "title": "AIME2025-II Q?",
@@ -1230,50 +1033,6 @@
    "judge": "答案LaTeX归一化匹配(整数字面/frac/根式)",
    "answer_key": null,
    "options": null
-  },
-  {
-   "qid": "MP1",
-   "src": "MMLU-Pro",
-   "title": "computer science #10380",
-   "lvl": "高",
-   "dim": "knowledge",
-   "type": "choice",
-   "score": 1.0,
-   "question": "Which of the following is NOT a reasonable justification for choosing to busy-wait on an asynchronous event?",
-   "options": [
-    [
-     "A",
-     "There is no other work for the processor to do."
-    ],
-    [
-     "B",
-     "A busy-wait loop is easier to code than an interrupt handler."
-    ],
-    [
-     "C",
-     "The program executes on a time-sharing system."
-    ],
-    [
-     "D",
-     "The program requires immediate response upon completion of the event."
-    ],
-    [
-     "E",
-     "The wait is expected to be short."
-    ],
-    [
-     "F",
-     "The event being waited on is a high-priority task."
-    ],
-    [
-     "G",
-     "The system has ample power resources."
-    ]
-   ],
-   "expected": "C",
-   "answer_key": "C",
-   "judge": "选项字母精确匹配",
-   "category": "computer science"
   },
   {
    "qid": "MP2",
@@ -1612,62 +1371,6 @@
    "category": "health"
   },
   {
-   "qid": "MP8",
-   "src": "MMLU-Pro",
-   "title": "psychology #2127",
-   "lvl": "高",
-   "dim": "knowledge",
-   "type": "choice",
-   "score": 1.0,
-   "question": "Discuss Mead's (1935) study of three New Guinea tribes. What do her findings indicate about the effect of culture on personality?",
-   "options": [
-    [
-     "A",
-     "Culture has no effect on personality traits."
-    ],
-    [
-     "B",
-     "Personality traits, especially those related to dominance, vary depending on the culture."
-    ],
-    [
-     "C",
-     "The differences in personality traits among the tribes were insignificant."
-    ],
-    [
-     "D",
-     "Only one of the tribes showed variation in personality traits due to cultural influences."
-    ],
-    [
-     "E",
-     "Personality traits are universally consistent due to shared human experience."
-    ],
-    [
-     "F",
-     "The study concluded that environment has a stronger effect on personality than culture does."
-    ],
-    [
-     "G",
-     "Personality traits are determined by genetics."
-    ],
-    [
-     "H",
-     "The study indicated that cultural norms have no distinct patterns or effects on the personality traits of the tribes."
-    ],
-    [
-     "I",
-     "Personality traits are the same across all cultures."
-    ],
-    [
-     "J",
-     "Mead's findings suggest that personality traits are primarily influenced by biological factors, with little cultural impact."
-    ]
-   ],
-   "expected": "B",
-   "answer_key": "B",
-   "judge": "选项字母精确匹配",
-   "category": "psychology"
-  },
-  {
    "qid": "OC1",
    "src": "OpenCompass/C-Eval/高等数学",
    "title": "C-Eval/高等数学",
@@ -1723,37 +1426,6 @@
     [
      "D",
      "21KB"
-    ]
-   ],
-   "expected": "D",
-   "answer_key": "D",
-   "judge": "选项字母精确匹配"
-  },
-  {
-   "qid": "OC3",
-   "src": "OpenCompass/CMMLU",
-   "title": "CMMLU #3",
-   "lvl": "高",
-   "dim": "knowledge",
-   "type": "choice",
-   "score": 1.0,
-   "question": "⼀辆汽⻋停在⽔平地⾯上，⼀个⼈⽤⼒⽔平推⻋，但⻋仍然静⽌，表明",
-   "options": [
-    [
-     "A",
-     "推⼒越⼤，静摩擦⼒越⼩"
-    ],
-    [
-     "B",
-     "推⼒⼤⼩变化时，静摩擦⼒⼤⼩不变"
-    ],
-    [
-     "C",
-     "推⼒⼩于静摩擦⼒"
-    ],
-    [
-     "D",
-     "推⼒越⼤，静摩擦⼒越⼤，推⼒与静摩擦⼒平衡"
     ]
    ],
    "expected": "D",
