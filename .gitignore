@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.pyc
+
+# 评测运行产物(结果/日志/备份)
+*.log
+*.bak_*
+final80_results.jsonl
+report_data.json
+
+# 环境与密钥(绝不提交)
+.env
+*.key
+*secret*
+
+# 系统
+.DS_Store
+Thumbs.db
