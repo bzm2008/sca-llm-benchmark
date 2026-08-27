@@ -16,7 +16,7 @@ JUDGE_BASE = os.environ.get("JUDGE_BASE", BASE)
 JUDGE_KEY = os.environ.get("JUDGE_KEY", KEY)
 PROXY = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36"
-PY = sys.executable
+PY = "sys.executable"
 BASH = None
 for cand in ("C:/Program Files/Git/bin/bash.exe", "C:/Program Files/Git/usr/bin/bash.exe", "C:/Program Files/Git/git-bash.exe"):
     if os.path.exists(cand): BASH = cand; break
@@ -33,6 +33,23 @@ ALL_MODELS = ["oc/hy-3", "nvidia/minimax-m3", "nvidia/deepseek-v4-flash-0731", "
               "nvidia/nemotron-3-ultra-550b-a55b", "qwen3.8-max", "stealth/ox-alpha", "42"]
 SMOKE_IDS = ["P01", "OB-C1", "OB-K1", "MH1", "SW1"]
 
+# 统一思考强度(公平对比): 所有支持 reasoning_effort 的模型一律 high, 保证评测口径一致
+REASONING_EFFORT = os.environ.get("REASONING_EFFORT", "high")
+
+def _mk_body(model, content, max_tokens, temperature, stream, with_reasoning=True):
+    b = {"model": model, "messages": [{"role": "user", "content": content}],
+         "max_tokens": max_tokens, "stream": stream, "temperature": temperature}
+    if with_reasoning and REASONING_EFFORT:
+        b["reasoning_effort"] = REASONING_EFFORT
+    return json.dumps(b).encode()
+
+def _reasoning_unsupported(err_text):
+    """400 错误信息是否指向 reasoning_effort 参数不支持(而非其他 400)。"""
+    e = (err_text or "").lower()
+    return any(k in e for k in ("reasoning_effort", "reasoning effort", "unknown parameter",
+                                "unknown argument", "unsupported parameter", "not supported",
+                                "invalid parameter", "unknown field"))
+
 import self_bank_final as SBF
 
 _op = None
@@ -44,36 +61,43 @@ def opener():
     return _op
 
 def chat_stream(model, content, max_tokens=4000, timeout=300, temperature=0.3):
-    body = json.dumps({"model": model, "messages": [{"role": "user", "content": content}],
-                       "max_tokens": max_tokens, "stream": True, "temperature": temperature}).encode()
-    req = urllib.request.Request(BASE + "/chat/completions", data=body,
-        headers={"Authorization": "Bearer " + KEY, "Content-Type": "application/json",
-                 "User-Agent": UA, "Accept": "text/event-stream"}, method="POST")
-    t0 = time.time(); first = None; buf = []; status = 200; err = ""
-    try:
-        r = opener().open(req, timeout=timeout)
-        for raw in r:
-            if raw.strip() == b"": continue
-            line = raw.decode("utf-8", "replace")
-            if not line.startswith("data:"): continue
-            p = line[5:].strip()
-            if p == "[DONE]": break
-            try: obj = json.loads(p)
-            except Exception: continue
-            if "error" in obj:
-                err = str(obj["error"]); status = obj.get("error", {}).get("code", "err"); break
-            try: d = obj["choices"][0]["delta"].get("content", "")
-            except Exception: d = ""
-            if d:
-                if first is None: first = time.time() - t0
-                buf.append(d)
-        return ("".join(buf), (first or time.time() - t0), round(time.time() - t0, 2), status, err)
-    except urllib.error.HTTPError as e:
-        try: b = e.read().decode("utf-8", "replace")
-        except Exception: b = ""
-        return ("", None, round(time.time() - t0, 2), e.code, b[:300])
-    except Exception as e:
-        return ("", None, round(time.time() - t0, 2), "EXC_" + type(e).__name__, str(e)[:200])
+    def _stream(body):
+        req = urllib.request.Request(BASE + "/chat/completions", data=body,
+            headers={"Authorization": "Bearer " + KEY, "Content-Type": "application/json",
+                     "User-Agent": UA, "Accept": "text/event-stream"}, method="POST")
+        t0 = time.time(); first = None; buf = []; status = 200; err = ""
+        try:
+            r = opener().open(req, timeout=timeout)
+            for raw in r:
+                if raw.strip() == b"": continue
+                line = raw.decode("utf-8", "replace")
+                if not line.startswith("data:"): continue
+                p = line[5:].strip()
+                if p == "[DONE]": break
+                try: obj = json.loads(p)
+                except Exception: continue
+                if "error" in obj:
+                    err = str(obj["error"]); status = obj.get("error", {}).get("code", "err"); break
+                try: d = obj["choices"][0]["delta"].get("content", "")
+                except Exception: d = ""
+                if d:
+                    if first is None: first = time.time() - t0
+                    buf.append(d)
+            return ("".join(buf), (first or time.time() - t0), round(time.time() - t0, 2), status, err)
+        except urllib.error.HTTPError as e:
+            try: b = e.read().decode("utf-8", "replace")
+            except Exception: b = ""
+            return ("", None, round(time.time() - t0, 2), e.code, b[:300])
+        except Exception as e:
+            return ("", None, round(time.time() - t0, 2), "EXC_" + type(e).__name__, str(e)[:200])
+    body = _mk_body(model, content, max_tokens, temperature, True)
+    out, ttft, el, st, err = _stream(body)
+    # 400 且指向 reasoning_effort 不支持 → 降级去掉该参数重试一次(其余模型仍统一 high)
+    if st == 400 and _reasoning_unsupported(err):
+        out2, ttft2, el2, st2, err2 = _stream(_mk_body(model, content, max_tokens, temperature, True, with_reasoning=False))
+        if st2 == 200:
+            return out2, ttft2, el2, 200, err2 or "no-reasoning_effort"
+    return out, ttft, el, st, err
 
 def chat_simple(model, content, max_tokens=10, timeout=60, temperature=0, base=BASE, key=KEY):
     body = json.dumps({"model": model, "messages": [{"role": "user", "content": content}],
@@ -389,7 +413,7 @@ def run_model(model, questions, done, env, smoke=False):
             if st == "ok":
                 log(f"  跳过 {q['qid']} (ok {rd.get('score')})"); continue
         for attempt in range(6):
-            mt = max(q.get("max", 3000), 3000)
+            mt = max(q.get("max", 4000), 4000)  # 统一高思考强度: 推理预算下限 4000
             prompt = build_prompt(q)
             text, ttft, el, st, err = chat_stream(model, prompt, max_tokens=mt, timeout=300, temperature=0.0)
             if st == 200 and text.strip():
@@ -402,7 +426,8 @@ def run_model(model, questions, done, env, smoke=False):
                     save_result(rec); log(f"  {q['qid']} 判分异常 {type(e).__name__}: {e}"); break
                 rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
                        "score": round(score, 1), "ttft": round(ttft, 2) if ttft else None,
-                       "elapsed": el, "status": "ok", "detail": detail, "answer": text[:4000]}
+                       "elapsed": el, "status": "ok", "detail": detail, "answer": text[:4000],
+                       "reasoning": REASONING_EFFORT or None}
                 save_result(rec); log(f"  {q['qid']}({q.get('lvl','')}) 得分 {score:.1f}  {detail}")
                 break
             elif st == 429 or "429" in str(err):

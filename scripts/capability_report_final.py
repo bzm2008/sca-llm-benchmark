@@ -25,8 +25,8 @@ def build_point_map():
     for q in ['P16','P17','P18']: pm[q]=4          # 超难加权 3→4
     pm['L01']=0.5; pm['L02']=1; pm['L03']=1; pm['L04']=1.5; pm['L05']=1.5
     pm['L06']=5                                     # 超难加权 3→5
-    pm['W01']=0.5; pm['W02']=1; pm['W03']=1.5
-    pm['W04']=5                                     # 超难加权 3→5
+    # V3: W01-W04 主观写作题 → R01-R04 代码推理选择题(客观判分), 分值沿用
+    pm['R01']=0.5; pm['R02']=1; pm['R03']=1.5; pm['R04']=5
     pm['M01']=1.5
     for q in ['M02','M03','M04']: pm[q]=4           # 超难加权 3→4
     # HumanEval: 删 OB-C4, 剩 4 题各 2 分
@@ -49,13 +49,13 @@ def build_point_map():
     return pm
 
 POINT = build_point_map()
-DIMS = ["编程", "Linux系统", "写作", "数学推理", "知识科学"]
-DIM_COLOR = {"编程":"#31C476","Linux系统":"#7CE0A8","写作":"#F5C518","数学推理":"#4FC3F7","知识科学":"#B388FF"}
+# V3: 写作维度已替换为代码推理选择题(R01-R04), 归入编程维度 → 4 维
+DIMS = ["编程", "Linux系统", "数学推理", "知识科学"]
+DIM_COLOR = {"编程":"#31C476","Linux系统":"#7CE0A8","数学推理":"#4FC3F7","知识科学":"#B388FF"}
 
 def dim_of(qid):
-    if qid.startswith("P") or qid.startswith("OB-C") or qid.startswith("SW"): return "编程"
+    if qid.startswith("P") or qid.startswith("R") or qid.startswith("OB-C") or qid.startswith("SW"): return "编程"
     if qid.startswith("L"): return "Linux系统"
-    if qid.startswith("W"): return "写作"
     # 注意: MP 以 M 开头, 必须在 M 之前判断, 否则被误归数学推理
     if qid.startswith("OB-K") or qid.startswith("OB-M") or qid.startswith("MP") or qid.startswith("OC"): return "知识科学"
     if qid.startswith("M") or qid.startswith("AI") or qid.startswith("MH"): return "数学推理"
