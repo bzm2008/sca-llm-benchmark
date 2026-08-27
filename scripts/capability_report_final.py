@@ -33,19 +33,20 @@ def build_point_map():
     for i in [1,2,3,5]: pm[f'OB-C{i}']=2            # OB-C4 已删
     # GPQA: 删 OB-K4/K6, K3→5 K5→6 其余 4 分
     pm['OB-K1']=4; pm['OB-K2']=4; pm['OB-K3']=5; pm['OB-K5']=6  # K4/K6 已删
-    # MMLU: 删 OB-M1/M3/M6, 剩 M2/M4/M5 各 1 分
-    for i in [2,4,5]: pm[f'OB-M{i}']=1              # M1/M3/M6 已删
+    # V4: MMLU 剩余 OB-M2/4/5 + OpenCompass OC1/2/4/5 已删(偏易)
+    #    → BBH 开源基准替换: BK01-07 各 1 分(知识科学 32 分不变)
+    for i in range(1,8): pm[f'BK0{i}']=1            # V4 新增 BBH 知识题
     # SWE-bench: SW1-6 加权 3→4, SW7 保持 3
     for i in range(1,7): pm[f'SW{i}']=4             # SW1-6 各 4
     pm['SW7']=3                                     # SW7 保持 3
     # AIME: 删 AI2, 剩各 3 分
     for i in [1,3,4]: pm[f'AI{i}']=3                # AI2 已删
-    # MATH-500: 不变, 各 2 分
-    for i in range(1,8): pm[f'MH{i}']=2
+    # MATH-500: V4 删 MH2/4/7(偏易), 剩 MH1/3/5/6 各 2 分
+    for i in [1,3,5,6]: pm[f'MH{i}']=2              # MH2/4/7 已删
+    # V4: BBH 数学推理替换 → BM01-03 各 2 分(数学 36.5 分不变)
+    for i in range(1,4): pm[f'BM0{i}']=2            # V4 新增 BBH 数学题
     # MMLU-Pro: 删 MP1/MP8, 剩各 1 分
     for i in [2,3,4,5,6,7]: pm[f'MP{i}']=1          # MP1/MP8 已删
-    # OpenCompass: 删 OC3, 剩各 1 分
-    for i in [1,2,4,5]: pm[f'OC{i}']=1              # OC3 已删
     return pm
 
 POINT = build_point_map()
@@ -56,6 +57,9 @@ DIM_COLOR = {"编程":"#31C476","Linux系统":"#7CE0A8","数学推理":"#4FC3F7"
 def dim_of(qid):
     if qid.startswith("P") or qid.startswith("R") or qid.startswith("OB-C") or qid.startswith("SW"): return "编程"
     if qid.startswith("L"): return "Linux系统"
+    # 注意: BM 归数学推理, 必须在 BK 之前判断(都以 B 开头)
+    if qid.startswith("BM"): return "数学推理"
+    if qid.startswith("BK"): return "知识科学"
     # 注意: MP 以 M 开头, 必须在 M 之前判断, 否则被误归数学推理
     if qid.startswith("OB-K") or qid.startswith("OB-M") or qid.startswith("MP") or qid.startswith("OC"): return "知识科学"
     if qid.startswith("M") or qid.startswith("AI") or qid.startswith("MH"): return "数学推理"

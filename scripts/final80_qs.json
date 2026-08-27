@@ -279,39 +279,39 @@
   {
    "qid": "L04",
    "src": "自建",
-   "title": "cpu_spike_diagnosis",
+   "title": "log_rotation_analysis",
    "lvl": "高",
    "dim": "linux",
    "type": "self",
    "score": 1.5,
    "judge": "详见 question_bank 题库文档,隐藏测试/rubric",
-   "question": "CPU 飙高证据链排查",
+   "question": "写 shell 命令/脚本：目录下有 3 个轮转日志文件 app.log、app.log.1、app.log.2，每行格式为「时间戳<TAB>状态码<TAB>路径」。统计三个文件中所有 5xx 状态码(500-599)出现的路径，按出现次数降序输出「路径<TAB>次数」，只输出有 5xx 的路径。用 cat/awk/sort/uniq 等标准命令实现，结果打印到 stdout。只输出完整 shell 命令，不要解释。",
    "answer_key": null,
    "options": null
   },
   {
    "qid": "L05",
    "src": "自建",
-   "title": "disk_space_mismatch",
+   "title": "sensitive_file_audit",
    "lvl": "高",
    "dim": "linux",
    "type": "self",
    "score": 1.5,
    "judge": "详见 question_bank 题库文档,隐藏测试/rubric",
-   "question": "df/du 不一致,已删除大文件",
+   "question": "写 shell 命令/脚本：目录（含隐藏文件）里混有普通文件和敏感文件。敏感文件特征为文件名包含 .env、backup、secret、key、password、pem、tar 之一（注意 .env 是隐藏文件，ls 默认不显示）。找出所有敏感文件的路径，每行一个，按字母序升序输出。用 find/ls 实现。只输出完整 shell 命令，不要解释。",
    "answer_key": null,
    "options": null
   },
   {
    "qid": "L06",
    "src": "自建",
-   "title": "network_timeout_decision",
+   "title": "service_health_check",
    "lvl": "超难",
    "dim": "linux",
    "type": "self",
    "score": 3.0,
    "judge": "详见 question_bank 题库文档,隐藏测试/rubric",
-   "question": "间歇性超时分层定位",
+   "question": "写 bash 脚本：检查 svc/ 目录下服务健康状态。判断条件：① app.pid 存在且内容非空；② heartbeat 文件 mtime 距今不超过 5 分钟（心跳新鲜）；③ port.txt 存在且内容以 LISTENING 开头。三者都满足输出 HEALTHY；任一不满足输出 UNHEALTHY:<原因>（原因中文：pid缺失/心跳过期/端口未监听，多个时用、分隔）。用 test/find/stat 实现。只输出完整 bash 脚本，不要解释。",
    "answer_key": null,
    "options": null
   },
@@ -560,108 +560,6 @@
    "dim": "knowledge"
   },
   {
-   "qid": "OB-M2",
-   "src": "OpenBench/MMLU",
-   "task_id": "formal_logic",
-   "lvl": "高",
-   "type": "choice",
-   "entry_point": null,
-   "question": "Use indirect truth tables to determine whether the following argument is valid. If the argument is invalid, choose an option which presents a counterexample. (There may be other counterexamples as well.)\n(K · L) ⊃ M\nN ⊃ ~M\nN ∨ K / L ⊃ K",
-   "test": null,
-   "expected": "Invalid. Counterexample when L and N are true and K and M are false",
-   "answer_key": "D",
-   "options": [
-    [
-     "A",
-     "Invalid. Counterexample when L, M, and N are true and K is false"
-    ],
-    [
-     "B",
-     "Invalid. Counterexample when L and M are true and K and N are false"
-    ],
-    [
-     "C",
-     "Valid"
-    ],
-    [
-     "D",
-     "Invalid. Counterexample when L and N are true and K and M are false"
-    ]
-   ],
-   "subject": "formal_logic",
-   "_ans_letter": "D",
-   "score": 1.0,
-   "dim": "knowledge"
-  },
-  {
-   "qid": "OB-M4",
-   "src": "OpenBench/MMLU",
-   "task_id": "high_school_physics",
-   "lvl": "高",
-   "type": "choice",
-   "entry_point": null,
-   "question": "Which configuration of battery and resistors will create a circuit with the greatest current?",
-   "test": null,
-   "expected": "A high voltage battery with resistors arranged in parallel",
-   "answer_key": "A",
-   "options": [
-    [
-     "A",
-     "A high voltage battery with resistors arranged in parallel"
-    ],
-    [
-     "B",
-     "A high voltage battery with resistors arranged in series"
-    ],
-    [
-     "C",
-     "A low voltage battery with resistors arranged in series"
-    ],
-    [
-     "D",
-     "A low voltage battery with resistors arranged in parallel"
-    ]
-   ],
-   "subject": "high_school_physics",
-   "_ans_letter": "A",
-   "score": 1.0,
-   "dim": "knowledge"
-  },
-  {
-   "qid": "OB-M5",
-   "src": "OpenBench/MMLU",
-   "task_id": "high_school_computer_science",
-   "lvl": "高",
-   "type": "choice",
-   "entry_point": null,
-   "question": "Of the following potential benefits, which is LEAST likely to be provided by the upgraded system?",
-   "test": null,
-   "expected": "The company will be able to provide a human representative for any incoming call.",
-   "answer_key": "B",
-   "options": [
-    [
-     "A",
-     "Human representatives will not be needed to respond to some inquiries."
-    ],
-    [
-     "B",
-     "The company will be able to provide a human representative for any incoming call."
-    ],
-    [
-     "C",
-     "Customers are likely to spend less time listening to information not relevant to their issue."
-    ],
-    [
-     "D",
-     "Customers will be unable to mistakenly select the incorrect department for their particular issue."
-    ]
-   ],
-   "subject": "high_school_computer_science",
-   "_ans_letter": "B",
-   "score": 1.0,
-   "dim": "knowledge"
-  },
-  {
    "qid": "SW1",
    "src": "SWE-bench_Lite",
    "title": "django__django-15213",
@@ -893,21 +791,6 @@
    "options": null
   },
   {
-   "qid": "MH2",
-   "src": "MATH-500",
-   "title": "Number Theory L4",
-   "lvl": "高",
-   "dim": "math",
-   "type": "math",
-   "score": 2.0,
-   "question": "Express the quotient $413_5 \\div 2_5$ in base 5.",
-   "expected": "204_5",
-   "solution": "We may carry out long division in base 5 just as in base 10. We have  \\[\n\\begin{array}{c|ccc}\n\\multicolumn{2}{r}{2} & 0 & 4 \\\\\n\\cline{2-4}\n2 & 4 & 1 & 3 \\\\\n\\multicolumn{2}{r}{4} & \\downarrow & \\\\ \\cline{2-2}\n\\multicolumn{2}{r}{0} & 1 & \\\\\n\\multicolumn{2}{r}{} & 0 & \\downarrow \\\\ \\cline{3-3}\n\\multicolumn{2}{r}{} & 1 & 3 \\\\\n\\multicolumn{2}{r}{} & 1 & 3 \\\\ \\cline{3-4}\n\\multicolumn{2}{r}{} & & 0\n\\end{",
-   "judge": "答案LaTeX归一化匹配(整数字面/frac/根式)",
-   "answer_key": null,
-   "options": null
-  },
-  {
    "qid": "MH3",
    "src": "MATH-500",
    "title": "Counting & Probability L4",
@@ -918,21 +801,6 @@
    "question": "A point $(x,y)$ is randomly selected such that $0 \\le x \\le 8$ and $0 \\le y \\le 4$. What is the probability that $x+y \\le 4$? Express your answer as a common fraction.",
    "expected": "\\frac{1}{4}",
    "solution": "Rewrite $x+y\\leq 4$ as $y\\leq 4-x$.  This inequality is satisfied by the points on and under the line $y=4-x$.  Sketching this line along with the $4\\times 8$ rectangle determined by the inequalities $0\\leq x\\leq 8$ and $0\\leq y\\leq 4$, we find that the points satisfying $x+y\\leq 4$ are those in the shaded triangle (see figure).  The  area of the triangle is $\\frac{1}{2}(4)(4)=8$ square units, and",
-   "judge": "答案LaTeX归一化匹配(整数字面/frac/根式)",
-   "answer_key": null,
-   "options": null
-  },
-  {
-   "qid": "MH4",
-   "src": "MATH-500",
-   "title": "Geometry L4",
-   "lvl": "高",
-   "dim": "math",
-   "type": "math",
-   "score": 2.0,
-   "question": "The area of $\\triangle ABC$ is 6 square centimeters. $\\overline{AB}\\|\\overline{DE}$. $BD=4BC$. What is the number of square centimeters in the area of $\\triangle CDE$? [asy]\ndraw((-.3,-3)--(.1,1)--(-1,0)--(3,0)--cycle);\nlabel(\"$A$\",(.1,1),N);\nlabel(\"$B$\",(-1,0),W);\nlabel(\"$C$\",(0,0),NE);\nlabel(\"$D$\",(3,0),E);\nlabel(\"$E$\",(-.3,-3),S);\n[/asy]",
-   "expected": "54",
-   "solution": "Since $AB \\parallel DE,$ we know that $\\angle A = \\angle E$ and $\\angle B = \\angle D.$ That works out nicely, since that means $\\triangle ABC \\sim EDC.$ If $BD = 4BC,$ that means $CD = BD - BC = 3BC.$ Therefore, the ratio of sides in $ABC$ to $EDC$ is $1:3,$ meaning the ratio of their areas is $1:9.$\n\nSince the area of $\\triangle ABC$ is $6\\text{ cm}^2,$ that means the area of $\\triangle CDE$ is $",
    "judge": "答案LaTeX归一化匹配(整数字面/frac/根式)",
    "answer_key": null,
    "options": null
@@ -963,21 +831,6 @@
    "question": "Find all values of $x$ that satisfy the equation $x = \\!\\sqrt{11-2x} + 4$.",
    "expected": "x=5",
    "solution": "We first isolate the square root, so we can then square both sides to get rid of it.  Subtracting 4 from both sides gives $x-4 = \\!\\sqrt{11-2x}$.  Squaring both sides gives $x^2 - 8x + 16 = 11-2x$, or $x^2 -6x + 5=0$.  Factoring gives $(x-5)(x-1)=0$, so $x=5$ or $x=1$.  Because we squared the equation, we must  check if our solutions are extraneous. For $x=5$, the equation reads $5 = \\!\\sqrt{11-10",
-   "judge": "答案LaTeX归一化匹配(整数字面/frac/根式)",
-   "answer_key": null,
-   "options": null
-  },
-  {
-   "qid": "MH7",
-   "src": "MATH-500",
-   "title": "Algebra L5",
-   "lvl": "高",
-   "dim": "math",
-   "type": "math",
-   "score": 2.0,
-   "question": "The smallest distance between the origin and a point on the graph of $y=\\frac{1}{\\sqrt{2}}\\left(x^2-3\\right)$ can be expressed as $\\sqrt{a}/b$, where $a$ and $b$ are positive integers such that $a$ is not divisible by the square of any integer greater than one.  Find $a+b$.",
-   "expected": "12",
-   "solution": "By the distance formula, we are trying to minimize $\\sqrt{x^2+y^2}=\\sqrt{x^2+(1/2)(x^4-6x^2+9)}$. In general, minimization problems like this require calculus, but one optimization method that sometimes works is to try to complete the square.  Pulling out a factor of $1/2$ from under the radical, we have \\begin{align*}\n\\frac{1}{\\sqrt{2}}\\sqrt{2x^2+x^4-6x^2+9}&=\\frac{1}{\\sqrt{2}}\\sqrt{(x^4-4x^2+4)+",
    "judge": "答案LaTeX归一化匹配(整数字面/frac/根式)",
    "answer_key": null,
    "options": null
@@ -1319,130 +1172,6 @@
    "category": "health"
   },
   {
-   "qid": "OC1",
-   "src": "OpenCompass/C-Eval/高等数学",
-   "title": "C-Eval/高等数学",
-   "lvl": "高",
-   "dim": "knowledge",
-   "type": "choice",
-   "score": 1.0,
-   "question": "已知函数$f(x,y)$在$\\mathbb{R}^{2}$上连续，且$f(x,y)=3xy+\\iint_{D}f(x,y)\\mathrm{d}x\\mathrm{d}y$，其中平面区域D由$y=0$，$y=2x^2$以及$x=1$围成，则$f(x,y)$____",
-   "options": [
-    [
-     "A",
-     "3xy+9"
-    ],
-    [
-     "B",
-     "3xy+12"
-    ],
-    [
-     "C",
-     "3xy+15"
-    ],
-    [
-     "D",
-     "3xy+3"
-    ]
-   ],
-   "expected": "D",
-   "answer_key": "D",
-   "judge": "选项字母精确匹配"
-  },
-  {
-   "qid": "OC2",
-   "src": "OpenCompass/C-Eval/计算机网络",
-   "title": "C-Eval/计算机网络",
-   "lvl": "高",
-   "dim": "knowledge",
-   "type": "choice",
-   "score": 1.0,
-   "question": "在一个TCP连接中，MSS为1KB，当拥塞窗口为34KB时收到了3个冗余ACK报文。如果在接下来的4个RTT内报文段传输都是成功的，那么当这些报文段均得到确认后，拥塞窗口的大小是____。",
-   "options": [
-    [
-     "A",
-     "8KB"
-    ],
-    [
-     "B",
-     "16KB"
-    ],
-    [
-     "C",
-     "20KB"
-    ],
-    [
-     "D",
-     "21KB"
-    ]
-   ],
-   "expected": "D",
-   "answer_key": "D",
-   "judge": "选项字母精确匹配"
-  },
-  {
-   "qid": "OC4",
-   "src": "OpenCompass/CMMLU",
-   "title": "CMMLU #4",
-   "lvl": "高",
-   "dim": "knowledge",
-   "type": "choice",
-   "score": 1.0,
-   "question": "金属鋰保存在",
-   "options": [
-    [
-     "A",
-     "水中"
-    ],
-    [
-     "B",
-     "石蜡中"
-    ],
-    [
-     "C",
-     "酒精中"
-    ],
-    [
-     "D",
-     "煤油"
-    ]
-   ],
-   "expected": "B",
-   "answer_key": "B",
-   "judge": "选项字母精确匹配"
-  },
-  {
-   "qid": "OC5",
-   "src": "OpenCompass/CMMLU",
-   "title": "CMMLU #5",
-   "lvl": "高",
-   "dim": "knowledge",
-   "type": "choice",
-   "score": 1.0,
-   "question": "用某种高等植物的纯合红花植株与纯合白花植株进行杂交，F1全部表现为红花。若F1自交，得到的F2植株中，红花为272株，白花为212株；若用纯合白花植株的花粉给F1红花植株授粉，得到的子代植株中，红花为101株，白花为302株。根据上述杂交实验结果推断，下列叙述正确的是",
-   "options": [
-    [
-     "A",
-     "F2中白花植株都是纯合子"
-    ],
-    [
-     "B",
-     "控制红花与白花的基因在一对同源染色体上"
-    ],
-    [
-     "C",
-     "F2中白花植株的基因型种类比红花植株的多"
-    ],
-    [
-     "D",
-     "F2中红花植株的基因型有2种"
-    ]
-   ],
-   "expected": "C",
-   "answer_key": "C",
-   "judge": "选项字母精确匹配"
-  },
-  {
    "qid": "R01",
    "src": "自建/代码推理",
    "lvl": "低",
@@ -1549,6 +1278,116 @@
      "1 / fallback / 运行报错"
     ]
    ]
+  },
+  {
+   "qid": "BK01",
+   "src": "BBH/date_understanding",
+   "lvl": "高",
+   "type": "choice",
+   "question": "Jane was born on the last day of Feburary in 2001. Today is her 16-year-old birthday. What is the date one year ago from today in MM/DD/YYYY?\nOptions:\n(A) 02/28/2015\n(B) 03/31/2016\n(C) 02/28/2016\n(D) 02/28/1992\n(E) 03/27/2016\n(F) 03/06/2016",
+   "expected": "(C)",
+   "answer_key": "C",
+   "options": null,
+   "name": "日期推理"
+  },
+  {
+   "qid": "BK02",
+   "src": "BBH/hyperbaton",
+   "lvl": "高",
+   "type": "choice",
+   "question": "Which sentence has the correct adjective order:\nOptions:\n(A) triangular new Vietnamese steel tiny awful pink match\n(B) awful tiny new triangular pink Vietnamese steel match",
+   "expected": "(B)",
+   "answer_key": "B",
+   "options": null,
+   "name": "形容词词序"
+  },
+  {
+   "qid": "BK03",
+   "src": "BBH/disambiguation_qa",
+   "lvl": "高",
+   "type": "choice",
+   "question": "In the following sentences, explain the antecedent of the pronoun (which thing the pronoun refers to), or state that it is ambiguous.\nSentence: The carpenter told the onlooker that they had been working on the house for three weeks.\nOptions:\n(A) The carpenter had been working on the house\n(B) The onlooker had been working on the house\n(C) Ambiguous",
+   "expected": "(A)",
+   "answer_key": "A",
+   "options": null,
+   "name": "代词指代消解"
+  },
+  {
+   "qid": "BK04",
+   "src": "BBH/snarks",
+   "lvl": "超难",
+   "type": "choice",
+   "question": "Which statement is sarcastic?\nOptions:\n(A) Soggy fries covered in bacon grease sounds unhealthy\n(B) Soggy fries covered in bacon grease sounds delicious",
+   "expected": "(B)",
+   "answer_key": "B",
+   "options": null,
+   "name": "反讽识别"
+  },
+  {
+   "qid": "BK05",
+   "src": "BBH/ruin_names",
+   "lvl": "高",
+   "type": "choice",
+   "question": "Which of the following is a humorous edit of this artist or movie name: 'raging bull'?\nOptions:\n(A) raging bulls\n(B) rating bull\n(C) ragingzbull\n(D) raging dull",
+   "expected": "(D)",
+   "answer_key": "D",
+   "options": null,
+   "name": "谐音梗名称"
+  },
+  {
+   "qid": "BK06",
+   "src": "BBH/causal_judgement",
+   "lvl": "超难",
+   "type": "exact",
+   "question": "How would a typical person answer each of the following questions about causation?\nGeorge and his sister Lena reunite at their parents' house for Thanksgiving. Whereas George just got into medical school, Lena is unhappy in her marriage and recently lost her job. Over the course of the day, George and Lena get into a number of heated arguments. Later in the afternoon they play a game of darts. They split the first two games, and the third game is close until the end. Who will win comes down to George's last shot. If he hits a high point region, he wins; if he hits a low point region, Lena wins. George doesn't care that Lena is having a difficult time; he really wants to beat her. He aims the dart at the high point region. He sets up his shot and the dart lands in the high point region. George triumphs in his victory while Lena is sad. Did George hit the high point region intentionally?\nOptions:\n- Yes\n- No",
+   "expected": "Yes",
+   "answer_key": null,
+   "options": null,
+   "name": "因果判断"
+  },
+  {
+   "qid": "BK07",
+   "src": "BBH/web_of_lies",
+   "lvl": "超难",
+   "type": "exact",
+   "question": "Question: Crista tells the truth. Shalonda says Crista lies. Millicent says Shalonda lies. Vernell says Millicent lies. Inga says Vernell tells the truth. Does Inga tell the truth?",
+   "expected": "No",
+   "answer_key": null,
+   "options": null,
+   "name": "谎言链推理"
+  },
+  {
+   "qid": "BM01",
+   "src": "BBH/multistep_arithmetic_two",
+   "lvl": "高",
+   "type": "num",
+   "question": "((-1 + 2 + 9 * 5) - (-2 + -4 + -4 * -7)) =",
+   "expected": "24",
+   "answer_key": null,
+   "options": null,
+   "name": "多步算术"
+  },
+  {
+   "qid": "BM02",
+   "src": "BBH/geometric_shapes",
+   "lvl": "超难",
+   "type": "choice",
+   "question": "This SVG path element <path d=\"M 38.99,46.51 L 55.71,29.57 M 55.71,29.57 L 43.62,8.22 M 43.62,8.22 L 18.82,5.59 M 18.82,5.59 L 6.41,30.84 M 6.41,30.84 L 18.87,45.96 M 18.87,45.96 L 38.99,46.51\"/> draws a\nOptions:\n(A) circle\n(B) heptagon\n(C) hexagon\n(D) kite\n(E) line\n(F) octagon\n(G) pentagon\n(H) rectangle\n(I) sector\n(J) triangle",
+   "expected": "(C)",
+   "answer_key": "C",
+   "options": null,
+   "name": "几何形状推理"
+  },
+  {
+   "qid": "BM03",
+   "src": "BBH/temporal_sequences",
+   "lvl": "超难",
+   "type": "choice",
+   "question": "Today, Hannah went to the art studio. Between what times could they have gone?\nWe know that:\nHannah woke up at 6am.\nThomas saw Hannah reading at the library from 6am to 8am.\nDavid saw Hannah getting a coffee at the cafe from 8am to 10am.\nLeslie saw Hannah stretching at a yoga studio from 6pm to 7pm.\nAshley saw Hannah walking towards the Statue of Liberty from 7pm to 8pm.\nThe art studio was closed after 8pm.\nBetween what times could Hannah have gone to the art studio?\nOptions:\n(A) 10am to 6pm\n(B) 7pm to 8pm\n(C) 6am to 8am\n(D) 8am to 10am",
+   "expected": "(A)",
+   "answer_key": "A",
+   "options": null,
+   "name": "时序推理"
   }
  ]
 }

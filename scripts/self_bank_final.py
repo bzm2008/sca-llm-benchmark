@@ -5,7 +5,6 @@
 run: 由执行器注入的可执行环境 (run_code/run_bash/judge)
 """
 import re
-import sys
 
 # ---------------- 工具: 把模型代码转成模块并跑测试 ----------------
 def make_runner(run):
@@ -899,20 +898,109 @@ def grade_m04(code, run):
               "是否区分性能优化与正确性同步。优秀90+，良好70-89。")
     return run["judge"]("生产者先查 qsize<N 再 put_nowait，消费者先查 qsize>0 再 get_nowait，给出反例与正确结构。", rubric, code)
 
+# ---------- V3.1: L04/L05/L06 主观 rubric → 客观 bash 执行题 ----------
+def mkfixture_l07():
+    """三个轮转日志, 每行 时间戳<TAB>状态码<TAB>路径; 期望 5xx 的 path 计数。"""
+    import os
+    d = __import__("tempfile").mkdtemp()
+    data = {
+        "app.log":   ["2026-01-01T00:00:01\t200\t/a", "2026-01-01T00:00:02\t500\t/api/x", "2026-01-01T00:00:03\t503\t/api/y"],
+        "app.log.1": ["2026-01-01T00:00:04\t500\t/api/x", "2026-01-01T00:00:05\t200\t/b", "2026-01-01T00:00:06\t500\t/api/x"],
+        "app.log.2": ["2026-01-01T00:00:07\t500\t/api/z", "2026-01-01T00:00:08\t200\t/api/x", "2026-01-01T00:00:09\t502\t/api/y"],
+    }
+    for fn, ls in data.items():
+        with open(os.path.join(d, fn), "w", encoding="utf-8") as f:
+            f.write("\n".join(ls) + "\n")
+    return {"dir": d, "expected": {"/api/x": 3, "/api/y": 2, "/api/z": 1}}
+
+def grade_l07(code, run):
+    """统计三个日志中 5xx 的 path 计数, 输出 path<TAB>count 降序。"""
+    fx = mkfixture_l07()
+    ok, out = run["bash"](code, timeout=20, cwd=fx["dir"])
+    if not ok or not out.strip():
+        return 0.0, (out[:120] if out else "exec-fail")
+    got = {}
+    for ln in out.strip().splitlines():
+        parts = ln.split()
+        if len(parts) >= 2 and parts[0].startswith("/"):
+            try: got[parts[0]] = int(parts[1])
+            except Exception: pass
+    hit = sum(1 for p, c in fx["expected"].items() if got.get(p) == c)
+    return round(100.0 * hit / len(fx["expected"]), 1), "paths:%d/3 %s" % (hit, sorted(got.items())[:3])
+
+def mkfixture_l08():
+    """目录混有敏感文件(文件名含 .env/backup/secret/key/password/pem/tar)。"""
+    import os
+    d = __import__("tempfile").mkdtemp()
+    files = [".env", "config.ini", "id_rsa.pem", "backup.tar", "notes.txt", "app.log"]
+    for fn in files:
+        with open(os.path.join(d, fn), "w", encoding="utf-8") as f:
+            f.write("x" * 50)
+    return {"dir": d, "expected": {".env", "id_rsa.pem", "backup.tar"}}
+
+def grade_l08(code, run):
+    """找出所有敏感文件相对路径(含隐藏 .env), 升序每行一个。"""
+    import os
+    fx = mkfixture_l08()
+    ok, out = run["bash"](code, timeout=20, cwd=fx["dir"])
+    if not ok or not out.strip():
+        return 0.0, (out[:120] if out else "exec-fail")
+    # 注意: 用 removeprefix 而非 lstrip, 否则 .env 会被剥成 env 而漏判
+    found = {ln.strip().removeprefix("./") for ln in out.strip().splitlines() if ln.strip()}
+    hit = sum(1 for p in fx["expected"] if p in found or os.path.basename(p) in found)
+    return round(100.0 * hit / len(fx["expected"]), 1), "found:%d/3 %s" % (hit, sorted(found)[:6])
+
+def mkfixture_l09(healthy=True):
+    """模拟服务: pid 文件 + heartbeat(mtime) + 端口文件。"""
+    import os, time
+    d = __import__("tempfile").mkdtemp()
+    svc = os.path.join(d, "svc")
+    os.makedirs(svc)
+    with open(os.path.join(svc, "app.pid"), "w") as f:
+        f.write("12345\n")
+    hb = os.path.join(svc, "heartbeat")
+    with open(hb, "w") as f:
+        f.write("ok\n")
+    age = 60 if healthy else 900  # 60s 新鲜 / 900s 过期
+    t = time.time() - age
+    os.utime(hb, (t, t))
+    with open(os.path.join(svc, "port.txt"), "w") as f:
+        f.write("LISTENING 8080\n")
+    return {"dir": d, "svc": svc, "expected": "HEALTHY" if healthy else "UNHEALTHY"}
+
+def grade_l09(code, run):
+    """健康检查: HEALTHY 或 UNHEALTHY:<原因>; healthy/unhealthy 两变体都测。"""
+    res = []
+    for healthy in (True, False):
+        fx = mkfixture_l09(healthy)
+        ok, out = run["bash"](code, timeout=25, cwd=fx["dir"])
+        text = (out or "").strip()
+        exp = fx["expected"]
+        if not ok or not text:
+            res.append((healthy, 0.0, "exec-fail" if not out else "no-output"))
+            continue
+        if exp == "HEALTHY":
+            res.append((healthy, 100.0 if text.upper().startswith("HEALTHY") else 0.0, text[:40]))
+        else:
+            res.append((healthy, 100.0 if text.upper().startswith("UNHEALTHY") else 0.0, text[:40]))
+    sc = round(sum(r[1] for r in res) / 2, 1)
+    detail = ";".join(("healthy" if r[0] else "unhealthy") + ":%.0f:%s" % (r[1], r[2]) for r in res)
+    return sc, detail[:120]
+
 # ---------- 注册 ----------
 GRADERS.update({
 "P01":grade_p01,"P02":grade_p02,"P03":grade_p03,"P04":grade_p04,"P05":grade_p05,"P06":grade_p06,
 "P07":grade_p07,"P08":grade_p08,"P09":grade_p09,"P10":grade_p10,"P11":grade_p11,"P12":grade_p12,
 "P13":grade_p13,"P14":grade_p14,"P15":grade_p15,"P16":grade_p16,"P17":grade_p17,"P18":grade_p18,
-"L01":grade_l01,"L02":grade_l02,"L03":grade_l03,"L04":grade_l04,"L05":grade_l05,"L06":grade_l06,
-"W01":grade_w01,"W02":grade_w02,"W03":grade_w03,"W04":grade_w04,
+"L01":grade_l01,"L02":grade_l02,"L03":grade_l03,
+"L04":grade_l07,"L05":grade_l08,"L06":grade_l09,   # V3.1: 主观 rubric → 客观 bash 执行
 "M01":grade_m01,"M02":grade_m02,"M03":grade_m03,"M04":grade_m04,
 })
 
 # ---------------- 通用执行工具 ----------------
 import subprocess as _subprocess
 import tempfile as _tempfile
-_PY = sys.executable
+_PY = "sys.executable"
 
 def _run_py(script, timeout=15):
     """在独立 Python 进程执行构造好的脚本(含模型代码+测试)。"""

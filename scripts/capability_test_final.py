@@ -206,6 +206,8 @@ def grade_question(q, text, env):
         return grade_humaneval(q, text, env)
     if t == "choice":
         return grade_choice(q, text)
+    if t == "exact":
+        return grade_exact(q, text)
     if t == "num":
         return grade_num(q, text)
     if t == "math":
@@ -268,6 +270,17 @@ def grade_choice(q, text):
     if m:
         return (100.0, "choice") if m.group(1).upper() == key else (0.0, "wrong:" + m.group(1))
     return 0.0, "no-letter"
+
+def grade_exact(q, text):
+    """BBH 短答案精确匹配(独立词/串, 不区分大小写): Yes/No/词/短语。"""
+    exp = str(q.get("expected") or "").strip()
+    if not exp:
+        return 0.0, "no-expected"
+    low = text.lower()
+    target = exp.lower()
+    if re.search(rf"\b{re.escape(target)}\b", low):
+        return 100.0, "exact"
+    return 0.0, "exp=" + exp[:30]
 
 def grade_num(q, text):
     exp = str(q.get("expected") or "").strip()

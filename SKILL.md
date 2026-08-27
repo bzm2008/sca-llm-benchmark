@@ -1,6 +1,6 @@
 ---
 name: relay-capability-test
-description: 对任意 OpenAI 兼容中转站/Relay 的多个模型做横向能力评测。主流程使用 70 题 / 150 分权威题组 V2（自建工程题 + OpenBench HumanEval/GPQA/MMLU + SWE-bench + AIME + MATH-500 + MMLU-Pro + OpenCompass 体系，基于实测得分率删减过易题、加权超难题以增强模型区分度），输出自包含 HTML 报告（内联 SVG 排名图/分组柱状图/雷达图/逐题热力图/耗时与报错对比）+ 文字分析（各模型优缺点 + 时间性价比总结）。含断点续测、429/400/401/402/503/524 分类退避与快速失败、代码沙箱执行、轻量裁判打分。当用户要求"测这几个模型的能力/跑一遍能力测试/对比模型强弱/出图表报告"时使用。与 relay-probe（边界探测）互补。
+description: 对任意 OpenAI 兼容中转站/Relay 的多个模型做横向能力评测。主流程使用 70 题 / 150 分权威题组 V4（自建工程题 + OpenBench HumanEval/GPQA/BBH + SWE-bench + AIME + MATH-500 + MMLU-Pro，V2 起基于实测得分率删减过易题、加权超难题，V4 引入 BIG-Bench Hard 开源基准提升知识/数学难度，增强模型区分度），输出自包含 HTML 报告（内联 SVG 排名图/分组柱状图/雷达图/逐题热力图/耗时与报错对比）+ 文字分析（各模型优缺点 + 时间性价比总结）。含断点续测、429/400/401/402/503/524 分类退避与快速失败、代码沙箱执行、轻量裁判打分。当用户要求"测这几个模型的能力/跑一遍能力测试/对比模型强弱/出图表报告"时使用。与 relay-probe（边界探测）互补。
 ---
 
 # relay-capability-test 多模型能力评测
@@ -8,7 +8,7 @@ description: 对任意 OpenAI 兼容中转站/Relay 的多个模型做横向能�
 ## 适用场景
 给定中转站 endpoint + key + 一批模型名，要横向对比各模型真实能力并出"图表+文字报告"。
 
-## 快速开始（V2 题组：70 题 / 150 分）
+## 快速开始（V4 题组：70 题 / 150 分）
 ```bash
 python scripts/capability_test_final.py                          # 跑 ALL_MODELS 全量(串行)
 python scripts/capability_test_final.py MODEL_A MODEL_B          # 指定模型; 跑完自动生成报告
@@ -18,22 +18,22 @@ python scripts/capability_test_final.py M1 M2 M3 --parallel 5    # 并行: 线�
 ```
 - **并行模式**：`--parallel N` 用 `ThreadPoolExecutor` 按模型分组调度（每模型 1 个 worker，worker 内保持题目顺序，同模型不乱序）。de5.net 实测限流 188 req/min / 625k tokens/min，60+ 并发可成功，而串行只用到 ~0.5%——**瓶颈是模型生成延迟而非中转站**，10 路并发约提速 10 倍仍远低于上限。fixture 用 `tempfile.mkdtemp()` 每调用独立目录，线程安全；`log`/`save_result` 已加锁。429 各 worker 独立退避互不阻塞。
 - 改脚本顶部 `KEY / BASE / ALL_MODELS / JUDGE` 适配新中转站（当前默认 de5.net）。
-- **唯一数据源**：`scripts/final80_qs.json`（文件名沿 V1 未改，实为 **70 道** V2 题，seed 固定，选项已打乱落盘）。审阅看到的题 = 实际跑的题。
+- **唯一数据源**：`scripts/final80_qs.json`（文件名沿 V1 未改，实为 **70 道** V4 题，seed 固定，选项已打乱落盘）。审阅看到的题 = 实际跑的题。
 - **题组规格**：`scripts/question_bank_final.md`（分值明细、判分协议、难度与权威性、局限声明）。
 - 原始数据：`final80_results.jsonl`（按 model+qid 追加，天然断点续测）。每条含 `score`(判分器 0-100 率)/`elapsed`(单题耗时)/`ttft`(首字延迟)/`status`(ok 或 错误分类)/`detail`/`answer`。
 - 报告生成：`python scripts/capability_report_final.py` → `capability_report_final.html`（自包含，无外部依赖，离线可开）。注意：报告聚合时**实际得分 = 判分器分/100 × 题面分值**，不能直接累加 jsonl 里的 score 字段。
 
 ## 关键设计（勿随意删改）
-- **题组构成（V2：70 题 / 150 分）**：
+- **题组构成（V4：70 题 / 150 分）**：
   - 自建工程题 32（60 分）：并发/异步/幂等/持久化/故障恢复/代码审查/多文件项目，按隐藏测试通过率判分。超难档 P16-18=4、L06=5、M02-04=4（V2 加权）。V3 起含 R01-R04 代码推理选择题（0.5/1/1.5/5）。
-  - OpenBench 核心 11（30 分）：HumanEval×4（官方 `check(candidate)` 沙箱）、GPQA-Diamond×4（四选一，K3=5 K5=6 其余 4）、MMLU×3（四选一）。
+  - OpenBench 核心 15（34 分）：HumanEval×4（官方 `check(candidate)` 沙箱）、GPQA-Diamond×4（四选一，K3=5 K5=6 其余 4）、**BBH 知识×7（各 1 分，V4 替换原 MMLU×3）**。
   - SWE-bench Lite 7（27 分）：真实 repo issue + gold patch 元数据，静态 rubric（文件命中 50% + 函数符号 30% + patch 结构 20%），SW1-6=4 SW7=3。
   - AIME 2025 3（9 分）：竞赛数学，数字精确。
-  - MATH-500 7（14 分）：LaTeX 归一化。
-  - MMLU-Pro 6（6 分）/ OpenCompass 体系 4（4 分）：四选一。
-- **V2 重构原则**（2026-08-26）：基于实测得分率删过易题（满分率≥84.7% 无区分度）、加权超难题（+19 分），体现模型差异性。V3（2026-08-27）起：W01-W04 主观写作题→R01-R04 代码推理选择题（客观唯一答案、程序化判分），写作维度移除（4 维）。当前维度占比：编程 33题/71分(47%) / Linux 6/10.5 / 数学 14/36.5 / 知识 17/32。删题分析工具：`scripts/analyze_difficulty.py`（按已作答模型统计满分率，未作答不计入正确率）。
+  - MATH-500 4（8 分，V4 删 MH2/4/7）+ **BBH 数学 3（6 分）**：LaTeX 归一化 / 数字或单字母。
+  - MMLU-Pro 6（6 分）：四选一。
+- **V2 重构原则**（2026-08-26）：基于实测得分率删过易题（满分率≥84.7% 无区分度）、加权超难题（+19 分），体现模型差异性。V3（2026-08-27）起：W01-W04 主观写作题→R01-R04 代码推理选择题（客观唯一答案、程序化判分），写作维度移除（4 维）。V4（2026-08-27）起：参考开源基准难度提升——MMLU 剩余 3 题 + OpenCompass 4 题 + MATH-500 偏易 3 题 → **BIG-Bench Hard（BBH）10 题**（知识 7 BK01-07 + 数学 3 BM01-03，官方仓库原题 seed=20260827），并新增 `exact`（Yes/No）判分类型、L04-L06 主观 rubric 改客观 bash 执行判分。当前维度占比（V4 不变）：编程 33题/71分(47%) / Linux 6/10.5 / 数学 14/36.5 / 知识 17/32。删题分析工具：`scripts/analyze_difficulty.py`（按已作答模型统计满分率，未作答不计入正确率）。
 - **统一思考强度**（V3）：所有支持 `reasoning_effort` 的模型一律 `high`（`REASONING_EFFORT` 环境变量可改），保证评测口径一致；400 且指向参数不支持时自动降级去掉该参数重试一次，并在结果记录 `reasoning` 字段。max_tokens 下限 4000（高思考下推理预算充足）。
-- **判分**：数值精确 / 代码沙箱执行比对（HumanEval 官方 `check(candidate)`）/ 关键词+rubric 裁判（`ministral-8b-latest`，0-100）/ 选择题单字母 / SWE 静态 rubric。
+- **判分**：数值精确 / 代码沙箱执行比对（HumanEval 官方 `check(candidate)`）/ 关键词+rubric 裁判（`ministral-8b-latest`，0-100）/ 选择题单字母 / `exact` 精确匹配（BBH Yes-No，V4 新增）/ SWE 静态 rubric。
 - **断点续测**：启动时加载 `final80_results.jsonl`，`status==ok` 跳过；同 (model,qid) 去重取最后一条。
 - **错误分类**：
   - `429` → 限流，指数退避（45s 起步）。
@@ -62,7 +62,7 @@ python scripts/capability_test_final.py M1 M2 M3 --parallel 5    # 并行: 线�
 10. **中转站 free 组模型可用性边界（实测 de5.net）**：`/v1/models` 在 de5 被 403 拦截，无法列目录；只能用候选模型名直接探测。该 key 属 **free 组（distributor 分组）**，绝大多数旗舰模型返回 `503 model_not_found: No available channel for model X under group free (distributor)`——包括 `o3`/`o4-mini`/`gpt-4.5`/`gpt-4.1-mini`/`gemini-2.5-pro`/`gemini-2.5-flash`/`llama-4-maverick`/`llama-4-scout`/`glm-4.5`/`grok-3`/`deepseek-r1`/`mistral-large-latest`(裸名)/`command-r-plus`/`yi-large`/`hunyuan-large`/`claude-opus-4`，**带厂商前缀（`openai/o3`、`google/gemini-2.5-pro`、`anthropic/claude-opus-4`、`mistral/mistral-large-latest`、`meta/llama-4-maverick`）同样是 503**。实测 free 组可用强模型 = 已在测的 `gpt-4.1`/`gemini-3.1-pro-preview`/`grok-4.6` 等 + 本次新探到的 **`mistral-large-latest`（200 OK 正常应答，强通用模型，可加入评测）**。结论：**free 组通道极其有限，别指望 o3/gpt-4.5/gemini-2.5-pro 等旗舰**；要测这些需换付费组 key 或不同 endpoint。探测时每个候选发 1 条 "reply with exactly: OK" 短请求即可，注意探测会占用 relay 配额（与在跑评测竞争），宜少量、必要时才做。
 
 ## 续测 / 补做跳过题工作流
-- **单遍执行器不会自动重做跳过题**：`capability_test_final.py` 的 `main()` 每模型只过一遍 80 题（`status==ok` 跳过；`unavailable` 重试 6 次仍失败就留下）。看门狗 `watch_final.py` 只出报告、不重跑。因此"跳过的题（unavailable/grade_error）"必须等本轮跑完后再单独续测一轮才会被重做。
+- **单遍执行器不会自动重做跳过题**：`capability_test_final.py` 的 `main()` 每模型只过一遍 70 题（`status==ok` 跳过；`unavailable` 重试 6 次仍失败就留下）。看门狗 `watch_final.py` 只出报告、不重跑。因此"跳过的题（unavailable/grade_error）"必须等本轮跑完后再单独续测一轮才会被重做。
 - **推荐做法**：写 `monitor_redo.py`（工作区根目录）后台常驻 —— 轮询 `final80_results.jsonl` 修改时间，静默 ≥20 分钟判定后台单遍进程已结束，然后**动态读取结果里出现过的真实模型（排除已确认死的 `anthropic/claude-sonnet-4.6`/`gpt-4o`/`qwen3.8-max`）** 追加新模型（如 `mistral-large-latest`），调用 `capability_test_final.py <models> --parallel 8`（其 resume 逻辑跳过 ok、重做 unavailable/缺失 = 即"补跳过题"），最后 `capability_report_final.py` 出报告。这样不干扰在跑评测、且自动补全。
 - **死模型别重跑**：`sonnet-4.6`（de5 无 claude 通道，Cursor API 404/403 伪装 200）、`gpt-4o`（上游空 content）、`qwen3.8-max`（WAF 风控拦截）已确认上游不可用，重跑纯烧额度，续测列表务必排除。
 
@@ -71,7 +71,7 @@ python scripts/capability_test_final.py M1 M2 M3 --parallel 5    # 并行: 线�
 - `final80_results.jsonl`：逐题原始结果（分数/耗时/TTFT/错误分类/答案节选），按 (model,qid) 去重取最后一条。
 
 ### 报告必含项（用户指定，缺一不可）
-1. **得分总览**：各模型总得分（满分 150）+ 每小题得分明细（80 题逐题可查）。
+1. **得分总览**：各模型总得分（满分 150）+ 每小题得分明细（70 题逐题可查）。
 2. **能力分维图表**：每方面（编程/Linux/数学推理/知识科学等维度）得分的分组柱状图 + 各模型多维度**雷达图**。
 3. **优缺点总结**：为每个模型单独写优缺点文字总结（结合正确率/鲁棒性/延迟表现，落到适用场景）。
 4. **耗时与报错对比**：每模型总耗时、每题平均耗时、TTFT 均值、报错次数（按错误类型分类：429/402/503/524/grade_error/unavailable），做横向对比图表。
