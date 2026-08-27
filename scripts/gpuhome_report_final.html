@@ -1,0 +1,859 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>GPUHome 能力横评 V4.1</title><style>
+:root{--bg:#00453E;--bg2:#06352F;--glass:rgba(255,255,255,.06);--border:rgba(255,255,255,.14);
+--text:#D9DBD6;--muted:#9FB3AD;--green:#31C476;--green2:#7CE0A8;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,Roboto,sans-serif;
+background:radial-gradient(1200px 700px at 15% -10%,#0a5a4f 0%,var(--bg) 45%,var(--bg2) 100%);
+color:var(--text);min-height:100vh;padding:32px 20px 70px;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:1120px;margin:0 auto;}
+header{margin-bottom:22px;}
+h1{font-size:27px;font-weight:800;letter-spacing:.5px;} h1 .accent{color:var(--green);}
+.sub{color:var(--muted);font-size:13px;margin-top:6px;}
+section{margin-top:30px;}
+h2{font-size:19px;font-weight:800;margin-bottom:12px;padding-left:11px;border-left:4px solid var(--green);}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0 4px;}
+.card{background:var(--glass);border:1px solid var(--border);border-radius:18px;padding:16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.18);}
+.card-label{font-size:12px;color:var(--muted);} .card-value{font-size:28px;font-weight:800;margin:5px 0 2px;} .card-sub{font-size:11px;color:var(--muted);}
+.chart{width:100%;height:auto;background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:12px;backdrop-filter:blur(10px);}
+.bl{font-size:12px;fill:var(--text);} .bv{font-size:11px;fill:#fff;font-weight:700;} .ax{font-size:10px;fill:var(--muted);} .rl{font-size:8.5px;fill:var(--muted);} .rc{font-size:9px;fill:var(--text);font-weight:700;}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:10px 2px;}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+.radar-wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:8px;}
+.radar-wall .radar{background:var(--glass);border:1px solid var(--border);border-radius:14px;padding:6px;width:100%;height:auto;}
+.pc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;margin-top:8px;}
+.pc{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:14px 16px;backdrop-filter:blur(10px);}
+.pc h3{font-size:14.5px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;}
+.chan{font-size:10px;color:var(--muted);border:1px solid rgba(255,255,255,.15);padding:1px 7px;border-radius:999px;margin-left:6px;font-weight:600;vertical-align:2px;}
+.pc .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;}
+.pc p{font-size:12.5px;color:var(--text);line-height:1.65;margin-top:6px;}
+.pc .mini{font-size:11px;color:var(--muted);margin-top:7px;display:flex;gap:14px;flex-wrap:wrap;}
+.tbl{width:100%;border-collapse:collapse;background:var(--glass);border:1px solid var(--border);border-radius:16px;overflow:hidden;font-size:12.5px;margin-top:8px;}
+.tbl th,.tbl td{padding:9px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.07);}
+.tbl th{background:rgba(255,255,255,.05);color:var(--green2);font-weight:700;position:sticky;top:0;}
+.tbl tr:hover td{background:rgba(255,255,255,.04);}
+.num{font-weight:700;}
+.hm{overflow-x:auto;background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:12px;margin-top:8px;}
+.hm-head,.hm-row{display:flex;align-items:center;}
+.hm-name{width:130px;flex:0 0 130px;font-size:11.5px;font-weight:700;color:var(--text);padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hm-grid{display:grid;grid-template-columns:repeat(70,14px);gap:2px;}
+.hm-col{width:14px;font-size:7px;color:var(--muted);text-align:center;writing-mode:vertical-rl;text-orientation:upright;height:60px;line-height:1;}
+.hm-cell{width:14px;height:14px;border-radius:2px;}
+.hm-cell.na{background:repeating-linear-gradient(45deg,rgba(255,255,255,.05),rgba(255,255,255,.05) 3px,rgba(255,255,255,.12) 3px,rgba(255,255,255,.12) 6px);}
+footer{margin-top:26px;font-size:12px;color:var(--muted);line-height:1.8;}
+footer b{color:var(--green2);}
+@media(max-width:760px){.cards{grid-template-columns:repeat(2,1fr);}.hm-name{width:90px;flex-basis:90px;}}
+</style></head>
+<body><div class="wrap">
+<header><h1>中转站 · <span class="accent">模型能力横评</span> V4.1</h1>
+<div class="sub">70 题 / 150 分权威题组(BBH 增强) · 生成时间 2026-08-28 00:22 (GMT+8) · 得分=判分器分÷100×题面分值 · 通道: gpuhome 中转×7 + 智谱官方×1 · 裁判 DeepSeek-V4-Flash</div></header>
+<div class="cards"><div class="card"><div class="card-label">参测模型</div><div class="card-value" style="color:#31C476">8</div><div class="card-sub">gpuhome×7 + 智谱官方×1</div></div><div class="card"><div class="card-label">完全完成 70/70</div><div class="card-value" style="color:#31C476">6</div><div class="card-sub">占 75%</div></div><div class="card"><div class="card-label">平均总分(150制)</div><div class="card-value" style="color:#7CE0A8">79.2</div><div class="card-sub">满分 150</div></div><div class="card"><div class="card-label">维度数 / 题数</div><div class="card-value" style="color:#4FC3F7">4 / 70</div><div class="card-sub">编程·Linux·数学·知识</div></div></div>
+
+<section><h2>① 综合排名（150 分制）</h2>
+<div class="legend"><span><i style="background:#31C476"></i>满分完成</span><span><i style="background:#F5C518"></i>≥90% 完成</span><span><i style="background:#FF8A4C"></i>部分未完成</span><span><i style="background:#555"></i>热力图灰斜纹=未完成</span></div>
+<svg viewBox="0 0 860 228" class="chart" preserveAspectRatio="xMinYMin meet">
+<text x="6" y="27.0" class="bl">1. DeepSeek-V4-Pro</text>
+<rect x="180" y="14" width="640.0" height="16" rx="5" fill="#31C476"/>
+<text x="826.0" y="27.0" class="bv">117.6</text>
+<text x="6" y="53.0" class="bl">2. Kimi-K2.7-Code</text>
+<rect x="180" y="40" width="623.5045933991153" height="16" rx="5" fill="#31C476"/>
+<text x="809.5045933991153" y="53.0" class="bv">114.5</text>
+<text x="6" y="79.0" class="bl">3. DeepSeek-V4-Flash</text>
+<rect x="180" y="66" width="618.3327662470228" height="16" rx="5" fill="#31C476"/>
+<text x="804.3327662470228" y="79.0" class="bv">113.6</text>
+<text x="6" y="105.0" class="bl">4. GLM-5.2</text>
+<rect x="180" y="92" width="589.5882953385506" height="16" rx="5" fill="#31C476"/>
+<text x="775.5882953385506" y="105.0" class="bv">108.3</text>
+<text x="6" y="131.0" class="bl">5. GLM-5.3-Flash</text>
+<rect x="180" y="118" width="493.2289894521946" height="16" rx="5" fill="#31C476"/>
+<text x="679.2289894521946" y="131.0" class="bv">90.6</text>
+<text x="6" y="157.0" class="bl">6. MiniMax-M3</text>
+<rect x="180" y="144" width="425.45083361687654" height="16" rx="5" fill="#31C476"/>
+<text x="611.4508336168765" y="157.0" class="bv">78.2</text>
+<text x="6" y="183.0" class="bl">7. Qwen3.8-Max</text>
+<rect x="180" y="170" width="34.46070091867982" height="16" rx="5" fill="#FF8A4C"/>
+<text x="220.46070091867983" y="183.0" class="bv">6.3</text>
+<text x="6" y="209.0" class="bl">8. Qwen3.8-27B</text>
+<rect x="180" y="196" width="23.57264375637972" height="16" rx="5" fill="#FF8A4C"/>
+<text x="209.5726437563797" y="209.0" class="bv">4.3</text>
+</svg>
+</section>
+
+<section><h2>② 逐题热力图（判分器分 0-100）</h2>
+<div class="sub" style="font-size:12px;margin-bottom:2px">行=模型（按总分降序），列=70 题；绿越深分越高，灰斜纹=未完成。横向可滚动。</div>
+<div class="hm"><div class="hm-head"><div class="hm-name">模型</div><div class="hm-grid">
+<div class="hm-col" title="P01">P01</div>
+<div class="hm-col" title="P02">P02</div>
+<div class="hm-col" title="P03">P03</div>
+<div class="hm-col" title="P04">P04</div>
+<div class="hm-col" title="P05">P05</div>
+<div class="hm-col" title="P06">P06</div>
+<div class="hm-col" title="P07">P07</div>
+<div class="hm-col" title="P08">P08</div>
+<div class="hm-col" title="P09">P09</div>
+<div class="hm-col" title="P10">P10</div>
+<div class="hm-col" title="P11">P11</div>
+<div class="hm-col" title="P12">P12</div>
+<div class="hm-col" title="P13">P13</div>
+<div class="hm-col" title="P14">P14</div>
+<div class="hm-col" title="P15">P15</div>
+<div class="hm-col" title="P16">P16</div>
+<div class="hm-col" title="P17">P17</div>
+<div class="hm-col" title="P18">P18</div>
+<div class="hm-col" title="L01">L01</div>
+<div class="hm-col" title="L02">L02</div>
+<div class="hm-col" title="L03">L03</div>
+<div class="hm-col" title="L04">L04</div>
+<div class="hm-col" title="L05">L05</div>
+<div class="hm-col" title="L06">L06</div>
+<div class="hm-col" title="M01">M01</div>
+<div class="hm-col" title="M02">M02</div>
+<div class="hm-col" title="M03">M03</div>
+<div class="hm-col" title="M04">M04</div>
+<div class="hm-col" title="OB-C1">OB-C1</div>
+<div class="hm-col" title="OB-C2">OB-C2</div>
+<div class="hm-col" title="OB-C3">OB-C3</div>
+<div class="hm-col" title="OB-C5">OB-C5</div>
+<div class="hm-col" title="OB-K1">OB-K1</div>
+<div class="hm-col" title="OB-K2">OB-K2</div>
+<div class="hm-col" title="OB-K3">OB-K3</div>
+<div class="hm-col" title="OB-K5">OB-K5</div>
+<div class="hm-col" title="SW1">SW1</div>
+<div class="hm-col" title="SW2">SW2</div>
+<div class="hm-col" title="SW3">SW3</div>
+<div class="hm-col" title="SW4">SW4</div>
+<div class="hm-col" title="SW5">SW5</div>
+<div class="hm-col" title="SW6">SW6</div>
+<div class="hm-col" title="SW7">SW7</div>
+<div class="hm-col" title="AI1">AI1</div>
+<div class="hm-col" title="AI3">AI3</div>
+<div class="hm-col" title="AI4">AI4</div>
+<div class="hm-col" title="MH1">MH1</div>
+<div class="hm-col" title="MH3">MH3</div>
+<div class="hm-col" title="MH5">MH5</div>
+<div class="hm-col" title="MH6">MH6</div>
+<div class="hm-col" title="MP2">MP2</div>
+<div class="hm-col" title="MP3">MP3</div>
+<div class="hm-col" title="MP4">MP4</div>
+<div class="hm-col" title="MP5">MP5</div>
+<div class="hm-col" title="MP6">MP6</div>
+<div class="hm-col" title="MP7">MP7</div>
+<div class="hm-col" title="R01">R01</div>
+<div class="hm-col" title="R02">R02</div>
+<div class="hm-col" title="R03">R03</div>
+<div class="hm-col" title="R04">R04</div>
+<div class="hm-col" title="BK01">BK01</div>
+<div class="hm-col" title="BK02">BK02</div>
+<div class="hm-col" title="BK03">BK03</div>
+<div class="hm-col" title="BK04">BK04</div>
+<div class="hm-col" title="BK05">BK05</div>
+<div class="hm-col" title="BK06">BK06</div>
+<div class="hm-col" title="BK07">BK07</div>
+<div class="hm-col" title="BM01">BM01</div>
+<div class="hm-col" title="BM02">BM02</div>
+<div class="hm-col" title="BM03">BM03</div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="DeepSeek-V4-Pro">DeepSeek-V4-Pro</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P02: 100分"></div>
+<div class="hm-cell" style="background:rgb(26,146,120);opacity:0.75" title="DeepSeek-V4-Pro P03: 67分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro P09: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P10: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro P11: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro P12: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro P13: 0分"></div>
+<div class="hm-cell" style="background:rgb(27,160,125);opacity:0.80" title="DeepSeek-V4-Pro P14: 75分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro P15: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro P16: 0分"></div>
+<div class="hm-cell" style="background:rgb(23,98,101);opacity:0.57" title="DeepSeek-V4-Pro P17: 36分"></div>
+<div class="hm-cell" style="background:rgb(29,199,139);opacity:0.95" title="DeepSeek-V4-Pro P18: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro L01: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro L02: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro L03: 100分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Pro L04: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Pro L05: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Pro L06: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,196,138);opacity:0.94" title="DeepSeek-V4-Pro M01: 98分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Pro M02: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Pro M03: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Pro M04: 95分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro OB-C1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro OB-C2: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro OB-C3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro OB-C5: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro OB-K1: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro OB-K2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro OB-K3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro OB-K5: 100分"></div>
+<div class="hm-cell" style="background:rgb(22,72,92);opacity:0.47" title="DeepSeek-V4-Pro SW1: 20分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Pro SW2: 70分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Pro SW3: 80分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Pro SW4: 70分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Pro SW5: 70分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Pro SW6: 70分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Pro SW7: 70分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro AI1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro AI3: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro AI4: 100分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Pro MH1: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Pro MH3: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Pro MH5: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Pro MH6: 80分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro MP2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro MP3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro MP4: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Pro MP5: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro MP6: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro MP7: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro R01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro R02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro R03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro R04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BK01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BK02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BK03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BK04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BK05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BK06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BK07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BM01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BM02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Pro BM03: 100分"></div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="Kimi-K2.7-Code">Kimi-K2.7-Code</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P02: 100分"></div>
+<div class="hm-cell" style="background:rgb(26,146,120);opacity:0.75" title="Kimi-K2.7-Code P03: 67分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code P09: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P10: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code P11: 0分"></div>
+<div class="hm-cell" style="background:rgb(27,160,125);opacity:0.80" title="Kimi-K2.7-Code P12: 75分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code P13: 0分"></div>
+<div class="hm-cell" style="background:rgb(27,160,125);opacity:0.80" title="Kimi-K2.7-Code P14: 75分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P15: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code P16: 100分"></div>
+<div class="hm-cell" style="background:rgb(23,98,101);opacity:0.57" title="Kimi-K2.7-Code P17: 36分"></div>
+<div class="hm-cell" style="background:rgb(28,178,131);opacity:0.87" title="Kimi-K2.7-Code P18: 86分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code L01: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code L02: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code L03: 100分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="Kimi-K2.7-Code L04: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="Kimi-K2.7-Code L05: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="Kimi-K2.7-Code L06: 95分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="Kimi-K2.7-Code M01: 80分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="Kimi-K2.7-Code M02: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,187,135);opacity:0.90" title="Kimi-K2.7-Code M03: 92分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="Kimi-K2.7-Code M04: 95分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code OB-C1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code OB-C2: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code OB-C3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code OB-C5: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code OB-K1: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code OB-K2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code OB-K3: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code OB-K5: 0分"></div>
+<div class="hm-cell" style="background:rgb(22,72,92);opacity:0.47" title="Kimi-K2.7-Code SW1: 20分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="Kimi-K2.7-Code SW2: 70分"></div>
+<div class="hm-cell" style="background:rgb(29,184,134);opacity:0.89" title="Kimi-K2.7-Code SW3: 90分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="Kimi-K2.7-Code SW4: 70分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="Kimi-K2.7-Code SW5: 70分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="Kimi-K2.7-Code SW6: 70分"></div>
+<div class="hm-cell" style="background:rgb(28,176,131);opacity:0.86" title="Kimi-K2.7-Code SW7: 85分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code AI1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code AI3: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code AI4: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code MH1: 0分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="Kimi-K2.7-Code MH3: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="Kimi-K2.7-Code MH5: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="Kimi-K2.7-Code MH6: 80分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code MP2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code MP3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code MP4: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code MP5: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code MP6: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code MP7: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code R01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code R02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code R03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code R04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BK01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BK02: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="Kimi-K2.7-Code BK03: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BK04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BK05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BK06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BK07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BM01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BM02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Kimi-K2.7-Code BM03: 100分"></div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="DeepSeek-V4-Flash">DeepSeek-V4-Flash</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P02: 100分"></div>
+<div class="hm-cell" style="background:rgb(26,146,120);opacity:0.75" title="DeepSeek-V4-Flash P03: 67分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash P09: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P10: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash P11: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash P12: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash P13: 0分"></div>
+<div class="hm-cell" style="background:rgb(27,160,125);opacity:0.80" title="DeepSeek-V4-Flash P14: 75分"></div>
+<div class="hm-cell" style="background:rgb(24,111,106);opacity:0.62" title="DeepSeek-V4-Flash P15: 44分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash P16: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash P17: 0分"></div>
+<div class="hm-cell" style="background:rgb(24,116,108);opacity:0.64" title="DeepSeek-V4-Flash P18: 48分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash L01: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash L02: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash L03: 100分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Flash L04: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Flash L05: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Flash L06: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,190,136);opacity:0.91" title="DeepSeek-V4-Flash M01: 94分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Flash M02: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Flash M03: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="DeepSeek-V4-Flash M04: 95分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash OB-C1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash OB-C2: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash OB-C3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash OB-C5: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash OB-K1: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash OB-K2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash OB-K3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash OB-K5: 100分"></div>
+<div class="hm-cell" style="background:rgb(22,72,92);opacity:0.47" title="DeepSeek-V4-Flash SW1: 20分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Flash SW2: 70分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Flash SW3: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,176,131);opacity:0.86" title="DeepSeek-V4-Flash SW4: 85分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Flash SW5: 70分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="DeepSeek-V4-Flash SW6: 70分"></div>
+<div class="hm-cell" style="background:rgb(28,176,131);opacity:0.86" title="DeepSeek-V4-Flash SW7: 85分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash AI1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash AI3: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash AI4: 100分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Flash MH1: 80分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash MH3: 0分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Flash MH5: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="DeepSeek-V4-Flash MH6: 80分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash MP2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash MP3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash MP4: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash MP5: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash MP6: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash MP7: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash R01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash R02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash R03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash R04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BK01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BK02: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="DeepSeek-V4-Flash BK03: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BK04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BK05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BK06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BK07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BM01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BM02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="DeepSeek-V4-Flash BM03: 100分"></div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="GLM-5.2">GLM-5.2</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P02: 100分"></div>
+<div class="hm-cell" style="background:rgb(26,146,120);opacity:0.75" title="GLM-5.2 P03: 67分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 P09: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P10: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 P11: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 P12: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 P13: 0分"></div>
+<div class="hm-cell" style="background:rgb(27,160,125);opacity:0.80" title="GLM-5.2 P14: 75分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 P15: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 P16: 0分"></div>
+<div class="hm-cell" style="background:rgb(23,98,101);opacity:0.57" title="GLM-5.2 P17: 36分"></div>
+<div class="hm-cell" style="background:rgb(29,188,135);opacity:0.91" title="GLM-5.2 P18: 93分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 L01: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 L02: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 L03: 100分"></div>
+<div class="hm-cell" style="background:rgb(28,180,132);opacity:0.88" title="GLM-5.2 L04: 88分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="GLM-5.2 L05: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,190,136);opacity:0.91" title="GLM-5.2 L06: 94分"></div>
+<div class="hm-cell" style="background:rgb(29,196,138);opacity:0.94" title="GLM-5.2 M01: 98分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="GLM-5.2 M02: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="GLM-5.2 M03: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="GLM-5.2 M04: 95分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 OB-C1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 OB-C2: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 OB-C3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 OB-C5: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 OB-K1: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 OB-K2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 OB-K3: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 OB-K5: 0分"></div>
+<div class="hm-cell" style="background:rgb(21,56,86);opacity:0.41" title="GLM-5.2 SW1: 10分"></div>
+<div class="hm-cell" style="background:rgb(21,56,86);opacity:0.41" title="GLM-5.2 SW2: 10分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="GLM-5.2 SW3: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,176,131);opacity:0.86" title="GLM-5.2 SW4: 85分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="GLM-5.2 SW5: 70分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="GLM-5.2 SW6: 70分"></div>
+<div class="hm-cell" style="background:rgb(28,176,131);opacity:0.86" title="GLM-5.2 SW7: 85分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 AI1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 AI3: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 AI4: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 MH1: 100分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="GLM-5.2 MH3: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="GLM-5.2 MH5: 80分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="GLM-5.2 MH6: 80分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 MP2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 MP3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 MP4: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 MP5: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 MP6: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 MP7: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 R01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 R02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 R03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 R04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BK01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BK02: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.2 BK03: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BK04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BK05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BK06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BK07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BM01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BM02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.2 BM03: 100分"></div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="GLM-5.3-Flash">GLM-5.3-Flash</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(29,190,136);opacity:0.91" title="GLM-5.3-Flash P01: 94分"></div>
+<div class="hm-cell" style="background:rgb(27,160,125);opacity:0.80" title="GLM-5.3-Flash P02: 75分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P03: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash P05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash P06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash P07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash P09: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P10: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P11: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P12: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P13: 0分"></div>
+<div class="hm-cell" style="background:rgb(27,160,125);opacity:0.80" title="GLM-5.3-Flash P14: 75分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P15: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P16: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash P17: 0分"></div>
+<div class="hm-cell" style="background:rgb(29,199,139);opacity:0.95" title="GLM-5.3-Flash P18: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash L01: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash L02: 0分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="GLM-5.3-Flash L03: 80分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash L04: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash L05: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash L06: 0分"></div>
+<div class="hm-cell" style="background:rgb(26,136,116);opacity:0.71" title="GLM-5.3-Flash M01: 60分"></div>
+<div class="hm-cell" style="background:rgb(29,188,135);opacity:0.91" title="GLM-5.3-Flash M02: 93分"></div>
+<div class="hm-cell" style="background:rgb(28,182,133);opacity:0.88" title="GLM-5.3-Flash M03: 89分"></div>
+<div class="hm-cell" style="background:rgb(29,188,135);opacity:0.91" title="GLM-5.3-Flash M04: 93分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash OB-C1: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash OB-C2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash OB-C3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash OB-C5: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash OB-K1: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash OB-K2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash OB-K3: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash OB-K5: 0分"></div>
+<div class="hm-cell" style="background:rgb(21,56,86);opacity:0.41" title="GLM-5.3-Flash SW1: 10分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="GLM-5.3-Flash SW2: 70分"></div>
+<div class="hm-cell" style="background:rgb(24,104,104);opacity:0.59" title="GLM-5.3-Flash SW3: 40分"></div>
+<div class="hm-cell" style="background:rgb(28,176,131);opacity:0.86" title="GLM-5.3-Flash SW4: 85分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="GLM-5.3-Flash SW5: 70分"></div>
+<div class="hm-cell" style="background:rgb(25,120,110);opacity:0.65" title="GLM-5.3-Flash SW6: 50分"></div>
+<div class="hm-cell" style="background:rgb(22,80,95);opacity:0.50" title="GLM-5.3-Flash SW7: 25分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash AI1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash AI3: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash AI4: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash MH1: 0分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="GLM-5.3-Flash MH3: 80分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash MH5: 0分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="GLM-5.3-Flash MH6: 80分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash MP2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash MP3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash MP4: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash MP5: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash MP6: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash MP7: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash R01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash R02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash R03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash R04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BK01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BK02: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="GLM-5.3-Flash BK03: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BK04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BK05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BK06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BK07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BM01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BM02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="GLM-5.3-Flash BM03: 100分"></div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="MiniMax-M3">MiniMax-M3</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P01: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 P02: 100分"></div>
+<div class="hm-cell" style="background:rgb(26,146,120);opacity:0.75" title="MiniMax-M3 P03: 67分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 P05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 P06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 P07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P09: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 P10: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P11: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P12: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P13: 0分"></div>
+<div class="hm-cell" style="background:rgb(25,120,110);opacity:0.65" title="MiniMax-M3 P14: 50分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P15: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P16: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 P17: 0分"></div>
+<div class="hm-cell" style="background:rgb(27,161,125);opacity:0.81" title="MiniMax-M3 P18: 76分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 L01: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 L02: 0分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="MiniMax-M3 L03: 80分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 L04: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 L05: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 L06: 0分"></div>
+<div class="hm-cell" style="background:rgb(29,196,138);opacity:0.94" title="MiniMax-M3 M01: 98分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="MiniMax-M3 M02: 95分"></div>
+<div class="hm-cell" style="background:rgb(29,190,136);opacity:0.91" title="MiniMax-M3 M03: 94分"></div>
+<div class="hm-cell" style="background:rgb(29,192,137);opacity:0.92" title="MiniMax-M3 M04: 95分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 OB-C1: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 OB-C2: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 OB-C3: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 OB-C5: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 OB-K1: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 OB-K2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 OB-K3: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 OB-K5: 0分"></div>
+<div class="hm-cell" style="background:rgb(21,56,86);opacity:0.41" title="MiniMax-M3 SW1: 10分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 SW2: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 SW3: 0分"></div>
+<div class="hm-cell" style="background:rgb(24,104,104);opacity:0.59" title="MiniMax-M3 SW4: 40分"></div>
+<div class="hm-cell" style="background:rgb(27,152,122);opacity:0.77" title="MiniMax-M3 SW5: 70分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 SW6: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 SW7: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 AI1: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 AI3: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 AI4: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 MH1: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 MH3: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 MH5: 0分"></div>
+<div class="hm-cell" style="background:rgb(28,168,128);opacity:0.83" title="MiniMax-M3 MH6: 80分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 MP2: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 MP3: 100分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 MP4: 0分"></div>
+<div class="hm-cell" style="background:rgb(20,40,80);opacity:0.35" title="MiniMax-M3 MP5: 0分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 MP6: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 MP7: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 R01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 R02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 R03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 R04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BK01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BK02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BK03: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BK04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BK05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BK06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BK07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BM01: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BM02: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="MiniMax-M3 BM03: 100分"></div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="Qwen3.8-Max">Qwen3.8-Max</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-Max P01: 100分"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P02: 未完成"></div>
+<div class="hm-cell" style="background:rgb(26,146,120);opacity:0.75" title="Qwen3.8-Max P03: 67分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-Max P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-Max P05: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-Max P06: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-Max P07: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-Max P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-Max P09: 100分"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P10: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P11: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P12: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P13: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P14: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P15: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P16: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P17: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max P18: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max L01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max L02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max L03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max L04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max L05: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max L06: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max M01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max M02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max M03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max M04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-C1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-C2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-C3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-C5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-K1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-K2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-K3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max OB-K5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max SW1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max SW2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max SW3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max SW4: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max SW5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max SW6: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max SW7: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max AI1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max AI3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max AI4: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MH1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MH3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MH5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MH6: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MP2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MP3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MP4: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MP5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MP6: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max MP7: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max R01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max R02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max R03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max R04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BK01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BK02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BK03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BK04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BK05: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BK06: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BK07: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BM01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BM02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-Max BM03: 未完成"></div>
+</div></div>
+<div class="hm-row"><div class="hm-name" title="Qwen3.8-27B">Qwen3.8-27B</div><div class="hm-grid">
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-27B P01: 100分"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P02: 未完成"></div>
+<div class="hm-cell" style="background:rgb(26,146,120);opacity:0.75" title="Qwen3.8-27B P03: 67分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-27B P04: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-27B P05: 100分"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P06: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P07: 未完成"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-27B P08: 100分"></div>
+<div class="hm-cell" style="background:rgb(30,200,140);opacity:0.95" title="Qwen3.8-27B P09: 100分"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P10: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P11: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P12: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P13: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P14: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P15: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P16: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P17: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B P18: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B L01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B L02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B L03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B L04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B L05: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B L06: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B M01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B M02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B M03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B M04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-C1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-C2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-C3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-C5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-K1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-K2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-K3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B OB-K5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B SW1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B SW2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B SW3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B SW4: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B SW5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B SW6: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B SW7: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B AI1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B AI3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B AI4: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MH1: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MH3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MH5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MH6: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MP2: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MP3: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MP4: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MP5: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MP6: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B MP7: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B R01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B R02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B R03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B R04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BK01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BK02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BK03: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BK04: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BK05: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BK06: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BK07: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BM01: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BM02: 未完成"></div>
+<div class="hm-cell na" title="Qwen3.8-27B BM03: 未完成"></div>
+</div></div></div></section>
+
+<section><h2>③ 能力分维图表</h2>
+<div class="sub" style="font-size:12px">A. 维度分组柱状图（Top12 模型，按各维度满分归一为 %）</div>
+<div class="legend"><span><i style="background:#31C476"></i>编程</span><span><i style="background:#7CE0A8"></i>Linux系统</span><span><i style="background:#4FC3F7"></i>数学推理</span><span><i style="background:#B388FF"></i>知识科学</span></div>
+<svg viewBox="0 0 900 340" class="chart">
+<line x1="40" y1="280.0" x2="890" y2="280.0" stroke="rgba(255,255,255,.08)"/>
+<text x="34" y="284.0" class="ax" text-anchor="end">0</text>
+<line x1="40" y1="228.0" x2="890" y2="228.0" stroke="rgba(255,255,255,.08)"/>
+<text x="34" y="232.0" class="ax" text-anchor="end">20</text>
+<line x1="40" y1="176.0" x2="890" y2="176.0" stroke="rgba(255,255,255,.08)"/>
+<text x="34" y="180.0" class="ax" text-anchor="end">40</text>
+<line x1="40" y1="124.0" x2="890" y2="124.0" stroke="rgba(255,255,255,.08)"/>
+<text x="34" y="128.0" class="ax" text-anchor="end">60</text>
+<line x1="40" y1="72.0" x2="890" y2="72.0" stroke="rgba(255,255,255,.08)"/>
+<text x="34" y="76.0" class="ax" text-anchor="end">80</text>
+<line x1="40" y1="20.0" x2="890" y2="20.0" stroke="rgba(255,255,255,.08)"/>
+<text x="34" y="24.0" class="ax" text-anchor="end">100</text>
+<rect x="68.0" y="108.9" width="14" height="171.1" rx="2" fill="#31C476" opacity="0.85"><title>DeepSeek-V4-Pro · 编程: 65.8%</title></rect>
+<rect x="88.0" y="89.2" width="14" height="190.8" rx="2" fill="#31C476" opacity="0.85"><title>Kimi-K2.7-Code · 编程: 73.4%</title></rect>
+<rect x="108.0" y="115.7" width="14" height="164.3" rx="2" fill="#31C476" opacity="0.85"><title>DeepSeek-V4-Flash · 编程: 63.2%</title></rect>
+<rect x="128.0" y="116.5" width="14" height="163.5" rx="2" fill="#31C476" opacity="0.85"><title>GLM-5.2 · 编程: 62.9%</title></rect>
+<rect x="148.0" y="129.2" width="14" height="150.8" rx="2" fill="#31C476" opacity="0.85"><title>GLM-5.3-Flash · 编程: 58.0%</title></rect>
+<rect x="168.0" y="172.4" width="14" height="107.6" rx="2" fill="#31C476" opacity="0.85"><title>MiniMax-M3 · 编程: 41.4%</title></rect>
+<rect x="188.0" y="256.9" width="14" height="23.1" rx="2" fill="#31C476" opacity="0.85"><title>Qwen3.8-Max · 编程: 8.9%</title></rect>
+<rect x="208.0" y="264.1" width="14" height="15.9" rx="2" fill="#31C476" opacity="0.85"><title>Qwen3.8-27B · 编程: 6.1%</title></rect>
+<text x="145.0" y="298" class="ax" text-anchor="middle">编程</text>
+<rect x="278.0" y="67.1" width="14" height="212.9" rx="2" fill="#7CE0A8" opacity="0.85"><title>DeepSeek-V4-Pro · Linux系统: 81.9%</title></rect>
+<rect x="298.0" y="54.6" width="14" height="225.4" rx="2" fill="#7CE0A8" opacity="0.85"><title>Kimi-K2.7-Code · Linux系统: 86.7%</title></rect>
+<rect x="318.0" y="54.6" width="14" height="225.4" rx="2" fill="#7CE0A8" opacity="0.85"><title>DeepSeek-V4-Flash · Linux系统: 86.7%</title></rect>
+<rect x="338.0" y="58.5" width="14" height="221.5" rx="2" fill="#7CE0A8" opacity="0.85"><title>GLM-5.2 · Linux系统: 85.2%</title></rect>
+<rect x="358.0" y="247.8" width="14" height="32.2" rx="2" fill="#7CE0A8" opacity="0.85"><title>GLM-5.3-Flash · Linux系统: 12.4%</title></rect>
+<rect x="378.0" y="247.8" width="14" height="32.2" rx="2" fill="#7CE0A8" opacity="0.85"><title>MiniMax-M3 · Linux系统: 12.4%</title></rect>
+<rect x="398.0" y="280.0" width="14" height="0.0" rx="2" fill="#7CE0A8" opacity="0.85"><title>Qwen3.8-Max · Linux系统: 0.0%</title></rect>
+<rect x="418.0" y="280.0" width="14" height="0.0" rx="2" fill="#7CE0A8" opacity="0.85"><title>Qwen3.8-27B · Linux系统: 0.0%</title></rect>
+<text x="355.0" y="298" class="ax" text-anchor="middle">Linux系统</text>
+<rect x="488.0" y="57.2" width="14" height="222.8" rx="2" fill="#4FC3F7" opacity="0.85"><title>DeepSeek-V4-Pro · 数学推理: 85.7%</title></rect>
+<rect x="508.0" y="71.5" width="14" height="208.5" rx="2" fill="#4FC3F7" opacity="0.85"><title>Kimi-K2.7-Code · 数学推理: 80.2%</title></rect>
+<rect x="528.0" y="69.1" width="14" height="210.9" rx="2" fill="#4FC3F7" opacity="0.85"><title>DeepSeek-V4-Flash · 数学推理: 81.1%</title></rect>
+<rect x="548.0" y="54.3" width="14" height="225.7" rx="2" fill="#4FC3F7" opacity="0.85"><title>GLM-5.2 · 数学推理: 86.8%</title></rect>
+<rect x="568.0" y="108.4" width="14" height="171.6" rx="2" fill="#4FC3F7" opacity="0.85"><title>GLM-5.3-Flash · 数学推理: 66.0%</title></rect>
+<rect x="588.0" y="113.1" width="14" height="166.9" rx="2" fill="#4FC3F7" opacity="0.85"><title>MiniMax-M3 · 数学推理: 64.2%</title></rect>
+<rect x="608.0" y="280.0" width="14" height="0.0" rx="2" fill="#4FC3F7" opacity="0.85"><title>Qwen3.8-Max · 数学推理: 0.0%</title></rect>
+<rect x="628.0" y="280.0" width="14" height="0.0" rx="2" fill="#4FC3F7" opacity="0.85"><title>Qwen3.8-27B · 数学推理: 0.0%</title></rect>
+<text x="565.0" y="298" class="ax" text-anchor="middle">数学推理</text>
+<rect x="698.0" y="28.1" width="14" height="251.9" rx="2" fill="#B388FF" opacity="0.85"><title>DeepSeek-V4-Pro · 知识科学: 96.9%</title></rect>
+<rect x="718.0" y="85.0" width="14" height="195.0" rx="2" fill="#B388FF" opacity="0.85"><title>Kimi-K2.7-Code · 知识科学: 75.0%</title></rect>
+<rect x="738.0" y="36.1" width="14" height="243.9" rx="2" fill="#B388FF" opacity="0.85"><title>DeepSeek-V4-Flash · 知识科学: 93.8%</title></rect>
+<rect x="758.0" y="93.1" width="14" height="186.9" rx="2" fill="#B388FF" opacity="0.85"><title>GLM-5.2 · 知识科学: 71.9%</title></rect>
+<rect x="778.0" y="85.0" width="14" height="195.0" rx="2" fill="#B388FF" opacity="0.85"><title>GLM-5.3-Flash · 知识科学: 75.0%</title></rect>
+<rect x="798.0" y="85.0" width="14" height="195.0" rx="2" fill="#B388FF" opacity="0.85"><title>MiniMax-M3 · 知识科学: 75.0%</title></rect>
+<rect x="818.0" y="280.0" width="14" height="0.0" rx="2" fill="#B388FF" opacity="0.85"><title>Qwen3.8-Max · 知识科学: 0.0%</title></rect>
+<rect x="838.0" y="280.0" width="14" height="0.0" rx="2" fill="#B388FF" opacity="0.85"><title>Qwen3.8-27B · 知识科学: 0.0%</title></rect>
+<text x="775.0" y="298" class="ax" text-anchor="middle">知识科学</text>
+</svg>
+<div class="sub" style="font-size:12px;margin-top:14px">B. 各模型多维度雷达图（4 维归一 %）</div>
+<div class="radar-wall"><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,40.1 118.4,75.0 75.0,120.4 23.6,75.0" fill="#31C47633" stroke="#31C476" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">DeepSeek-V4-Pro · 117.6</text>
+    </svg><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,36.1 121.0,75.0 75.0,117.5 35.3,75.0" fill="#31C47633" stroke="#31C476" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">Kimi-K2.7-Code · 114.5</text>
+    </svg><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,41.5 121.0,75.0 75.0,118.0 25.3,75.0" fill="#31C47633" stroke="#31C476" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">DeepSeek-V4-Flash · 113.6</text>
+    </svg><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,41.7 120.2,75.0 75.0,121.0 36.9,75.0" fill="#31C47633" stroke="#31C476" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">GLM-5.2 · 108.3</text>
+    </svg><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,44.3 81.6,75.0 75.0,110.0 35.3,75.0" fill="#31C47633" stroke="#31C476" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">GLM-5.3-Flash · 90.6</text>
+    </svg><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,53.1 81.6,75.0 75.0,109.0 35.3,75.0" fill="#31C47633" stroke="#31C476" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">MiniMax-M3 · 78.2</text>
+    </svg><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,70.3 75.0,75.0 75.0,75.0 75.0,75.0" fill="#FF8A4C33" stroke="#FF8A4C" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">Qwen3.8-Max · 6.3</text>
+    </svg><svg viewBox="0 0 150 150" class="radar">
+      <polygon points="75.0,61.8 88.2,75.0 75.0,88.2 61.8,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,48.5 101.5,75.0 75.0,101.5 48.5,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,35.3 114.8,75.0 75.0,114.7 35.3,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><polygon points="75.0,22.0 128.0,75.0 75.0,128.0 22.0,75.0" fill="none" stroke="rgba(255,255,255,.08)"/><line x1="75.0" y1="75.0" x2="75.0" y2="22.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="128.0" y2="75.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="75.0" y2="128.0" stroke="rgba(255,255,255,.1)"/><line x1="75.0" y1="75.0" x2="22.0" y2="75.0" stroke="rgba(255,255,255,.1)"/>
+      <polygon points="75.0,71.8 75.0,75.0 75.0,75.0 75.0,75.0" fill="#FF8A4C33" stroke="#FF8A4C" stroke-width="1.6"/>
+      <text x="75.0" y="10.0" class="rl" text-anchor="middle">编程</text><text x="140.0" y="75.0" class="rl" text-anchor="middle">Linux系统</text><text x="75.0" y="140.0" class="rl" text-anchor="middle">数学推理</text><text x="10.0" y="75.0" class="rl" text-anchor="middle">知识科学</text>
+      <text x="75.0" y="146" class="rc" text-anchor="middle">Qwen3.8-27B · 4.3</text>
+    </svg></div></section>
+
+<section><h2>④ 各模型优缺点总结</h2>
+<div class="pc-grid"><div class="pc"><h3><span>DeepSeek-V4-Pro<span class="chan">gpuhome中转</span></span><span class="tag" style="color:#31C476;border:1px solid #31C47655;background:#31C4761a">#1 · 70/70</span></h3>
+    <p>强项聚焦<b style='color:#B388FF'>知识科学</b>（96.9%），弱项在<b style='color:#FF8A4C'>编程</b>（65.8%）。 70/70 全量完成，平均单题 148.2s、TTFT 177.5s，报错 0 次。 适用场景：知识问答/学科推理。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">117.6</b></span><span>CPI <b style="color:#fff">1.13</b></span><span>均时 148.2s</span><span>报错 0</span></div></div><div class="pc"><h3><span>Kimi-K2.7-Code<span class="chan">gpuhome中转</span></span><span class="tag" style="color:#31C476;border:1px solid #31C47655;background:#31C4761a">#2 · 70/70</span></h3>
+    <p>强项聚焦<b style='color:#7CE0A8'>Linux系统</b>（86.7%），弱项在<b style='color:#FF8A4C'>编程</b>（73.4%）。 70/70 全量完成，平均单题 79.2s、TTFT 76.4s，报错 0 次。 适用场景：运维排障/系统脚本。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">114.5</b></span><span>CPI <b style="color:#fff">2.07</b></span><span>均时 79.2s</span><span>报错 0</span></div></div><div class="pc"><h3><span>DeepSeek-V4-Flash<span class="chan">gpuhome中转</span></span><span class="tag" style="color:#31C476;border:1px solid #31C47655;background:#31C4761a">#3 · 70/70</span></h3>
+    <p>强项聚焦<b style='color:#B388FF'>知识科学</b>（93.8%），弱项在<b style='color:#FF8A4C'>编程</b>（63.2%）。 70/70 全量完成，平均单题 86.8s、TTFT 105.7s，报错 0 次。 适用场景：知识问答/学科推理。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">113.6</b></span><span>CPI <b style="color:#fff">1.87</b></span><span>均时 86.8s</span><span>报错 0</span></div></div><div class="pc"><h3><span>GLM-5.2<span class="chan">gpuhome中转</span></span><span class="tag" style="color:#31C476;border:1px solid #31C47655;background:#31C4761a">#4 · 70/70</span></h3>
+    <p>强项聚焦<b style='color:#4FC3F7'>数学推理</b>（86.8%），弱项在<b style='color:#FF8A4C'>编程</b>（62.9%）。 70/70 全量完成，平均单题 37.8s、TTFT 39.1s，报错 0 次。 适用场景：竞赛数学/严谨推导。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">108.3</b></span><span>CPI <b style="color:#fff">4.09</b></span><span>均时 37.8s</span><span>报错 0</span></div></div><div class="pc"><h3><span>GLM-5.3-Flash<span class="chan">智谱官方</span></span><span class="tag" style="color:#31C476;border:1px solid #31C47655;background:#31C4761a">#5 · 70/70</span></h3>
+    <p>强项聚焦<b style='color:#B388FF'>知识科学</b>（75.0%），弱项在<b style='color:#FF8A4C'>Linux系统</b>（12.4%）。 70/70 全量完成，平均单题 16.6s、TTFT 12.2s，报错 0 次。 适用场景：知识问答/学科推理。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">90.6</b></span><span>CPI <b style="color:#fff">7.82</b></span><span>均时 16.6s</span><span>报错 0</span></div></div><div class="pc"><h3><span>MiniMax-M3<span class="chan">gpuhome中转</span></span><span class="tag" style="color:#31C476;border:1px solid #31C47655;background:#31C4761a">#6 · 70/70</span></h3>
+    <p>强项聚焦<b style='color:#B388FF'>知识科学</b>（75.0%），弱项在<b style='color:#FF8A4C'>Linux系统</b>（12.4%）。 70/70 全量完成，平均单题 19.7s、TTFT 25.2s，报错 0 次。 适用场景：知识问答/学科推理。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">78.2</b></span><span>CPI <b style="color:#fff">5.67</b></span><span>均时 19.7s</span><span>报错 0</span></div></div><div class="pc"><h3><span>Qwen3.8-Max<span class="chan">gpuhome中转</span></span><span class="tag" style="color:#FF8A4C;border:1px solid #FF8A4C55;background:#FF8A4C1a">#7 · 8/70</span></h3>
+    <p>强项聚焦<b style='color:#31C476'>编程</b>（8.9%），弱项在<b style='color:#FF8A4C'>Linux系统</b>（0.0%）。 仅 8/70 完成（11.4%），剩余 62 题未完成，分数未含缺失项，偏低属预期。 适用场景：后端/算法/自动化 coding。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">6.3</b></span><span>CPI <b style="color:#fff">0.4</b></span><span>均时 197.0s</span><span>报错 48</span></div></div><div class="pc"><h3><span>Qwen3.8-27B<span class="chan">gpuhome中转</span></span><span class="tag" style="color:#FF8A4C;border:1px solid #FF8A4C55;background:#FF8A4C1a">#8 · 6/70</span></h3>
+    <p>强项聚焦<b style='color:#31C476'>编程</b>（6.1%），弱项在<b style='color:#FF8A4C'>Linux系统</b>（0.0%）。 仅 6/70 完成（8.6%），剩余 64 题未完成，分数未含缺失项，偏低属预期。 适用场景：后端/算法/自动化 coding。</p>
+    <div class="mini"><span>总分 <b style="color:#fff">4.3</b></span><span>CPI <b style="color:#fff">0.84</b></span><span>均时 85.5s</span><span>报错 9</span></div></div></div></section>
+
+<section><h2>⑤ 耗时与报错对比 + 时间性价比</h2>
+<table class="tbl"><thead><tr><th>模型</th><th>CPI</th><th>均耗时</th><th>均TTFT</th><th>总耗时</th><th>报错数</th><th>报错类型分布</th></tr></thead>
+<tbody><tr><td>GLM-5.3-Flash</td><td class="num">7.82</td><td>16.6s</td><td>12.2s</td><td>1158.9s</td><td>0</td><td style="color:#FFB38A">—</td></tr><tr><td>MiniMax-M3</td><td class="num">5.67</td><td>19.7s</td><td>25.2s</td><td>1378.1s</td><td>0</td><td style="color:#FFB38A">—</td></tr><tr><td>GLM-5.2</td><td class="num">4.09</td><td>37.8s</td><td>39.1s</td><td>2648.1s</td><td>0</td><td style="color:#FFB38A">—</td></tr><tr><td>Kimi-K2.7-Code</td><td class="num">2.07</td><td>79.2s</td><td>76.4s</td><td>5543.1s</td><td>0</td><td style="color:#FFB38A">—</td></tr><tr><td>DeepSeek-V4-Flash</td><td class="num">1.87</td><td>86.8s</td><td>105.7s</td><td>6076.6s</td><td>0</td><td style="color:#FFB38A">—</td></tr><tr><td>DeepSeek-V4-Pro</td><td class="num">1.13</td><td>148.2s</td><td>177.5s</td><td>10371.9s</td><td>0</td><td style="color:#FFB38A">—</td></tr><tr><td>Qwen3.8-27B</td><td class="num">0.84</td><td>85.5s</td><td>0s</td><td>512.7s</td><td>9</td><td style="color:#FFB38A">unavailable×9</td></tr><tr><td>Qwen3.8-Max</td><td class="num">0.4</td><td>197.0s</td><td>354.1s</td><td>1576.0s</td><td>48</td><td style="color:#FFB38A">unavailable×48</td></tr></tbody></table>
+<p style="font-size:13px;line-height:1.8;margin-top:8px">性价比指数 CPI = 加权总分(150制) ÷ 总耗时(秒) × 100（值越大越划算）。<br><b style="color:#31C476">速度性价比最优</b>：GLM-5.3-Flash（CPI=7.82，均时 16.6s）。<br><b style="color:#7CE0A8">综合得分最高</b>：DeepSeek-V4-Pro（117.6/150）。<br>注：未完成模型的 CPI 仅基于已作答部分，整体偏低不代表真实能力上限。</p></section>
+
+<footer>
+<p><b>评分口径</b>：实际得分 = 判分器分(0-100) ÷ 100 × 题面分值；各维度满分（V4 四维）编程71.0 / Linux系统10.5 / 数学推理36.5 / 知识科学32.0，合计 150。</p>
+<p><b>通道说明</b>：7 个模型运行于 GPUHome 中转(tokens.gpuhome.cc)，GLM-5.3-Flash 运行于智谱官方(open.bigmodel.cn/api/paas/v4)；与 de5 中转互相独立配额。mimo-v2.5-pro 在 GPUHome 返回 503 已排除。</p>
+<p><b>数据说明</b>：qwen3.8-27b / qwen3.8-max 在本次评测后半程因 GPUHome 账号余额耗尽(接口返回 403 insufficient_user_quota，剩余 ¥-0.15)未能跑完 70 题，属端点基础设施故障、非模型能力；余额恢复后可按同一题库续跑补全。</p>
+<p><b>评测方法</b>：GPUHome 模型采用非流式(RELAY_STREAM=0)；GLM-5.3-Flash 为默认思考模型，采用流式(RELAY_STREAM=1)发送 reasoning_effort=high 以取得干净最终答案（非流式下其最终答案会滞留 reasoning_content 导致取到思考轨迹）。统一高思考强度；客观题代码/Bash 实跑判分，主观/数学题由裁判模型 DeepSeek-V4-Flash 打分。</p>
+</footer>
+</div></body></html>

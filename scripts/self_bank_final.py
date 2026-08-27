@@ -1000,7 +1000,7 @@ GRADERS.update({
 # ---------------- 通用执行工具 ----------------
 import subprocess as _subprocess
 import tempfile as _tempfile
-_PY = "sys.executable"
+_PY = "C:/Users/Administrator/.workbuddy/binaries/python/versions/3.13.12/python.exe"
 
 def _run_py(script, timeout=15):
     """在独立 Python 进程执行构造好的脚本(含模型代码+测试)。"""

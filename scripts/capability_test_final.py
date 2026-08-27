@@ -8,23 +8,25 @@ capability_test_final.py —— 最终 80 题 / 150 分评测执行器
 """
 import urllib.request, os, json, gzip, time, sys, re, subprocess, shutil, ast, tempfile
 
-KEY = os.environ.get("RELAY_KEY", "YOUR_RELAY_API_KEY")
-BASE = os.environ.get("RELAY_BASE", "https://YOUR_RELAY.example.com/v1")
+KEY = os.environ.get("RELAY_KEY", "sk-qvXrnPpA91lOJgZgdhAB20M5T0Lx4TMz0xj46xbXOR39LuIA")
+BASE = os.environ.get("RELAY_BASE", "https://xn--wnup5g6so4wn.de5.net/v1")
 # 裁判(judge)独立通道: 默认跟随被测通道; 跨通道评测时用 JUDGE_BASE/JUDGE_KEY 指定
 # (如 gpuhome 跑模型 + de5 跑裁判, 因 gpuhome 无 ministral-8b-latest)
 JUDGE_BASE = os.environ.get("JUDGE_BASE", BASE)
 JUDGE_KEY = os.environ.get("JUDGE_KEY", KEY)
+# 流式开关: gpuhome 等通道不支持 SSE 流式(流式返回 503 model_not_found), 需非流式
+USE_STREAM = os.environ.get("RELAY_STREAM", "1") == "1"
 PROXY = os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
 UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0 Safari/537.36"
-PY = "sys.executable"
+PY = "C:/Users/Administrator/.workbuddy/binaries/python/versions/3.13.12/python.exe"
 BASH = None
 for cand in ("C:/Program Files/Git/bin/bash.exe", "C:/Program Files/Git/usr/bin/bash.exe", "C:/Program Files/Git/git-bash.exe"):
     if os.path.exists(cand): BASH = cand; break
 if BASH is None: BASH = shutil.which("bash") or "bash"
-JUDGE = "ministral-8b-latest"
+JUDGE = os.environ.get("RELAY_JUDGE", "ministral-8b-latest")  # gpuhome 无 ministral-8b, 改用 deepseek-v4-flash
 HERE = os.path.dirname(os.path.abspath(__file__))
 QFILE = os.path.join(HERE, "final80_qs.json")
-RESULT_FILE = os.path.join(HERE, "final80_results.jsonl")
+RESULT_FILE = os.path.join(HERE, os.environ.get("RESULT_FILE", "final80_results.jsonl"))
 LOG_FILE = os.path.join(HERE, "final80_test.log")
 
 ALL_MODELS = ["oc/hy-3", "nvidia/minimax-m3", "nvidia/deepseek-v4-flash-0731", "gpt-4.1",
@@ -35,6 +37,12 @@ SMOKE_IDS = ["P01", "OB-C1", "OB-K1", "MH1", "SW1"]
 
 # 统一思考强度(公平对比): 所有支持 reasoning_effort 的模型一律 high, 保证评测口径一致
 REASONING_EFFORT = os.environ.get("REASONING_EFFORT", "high")
+# 单题请求超时(秒)。默认 300；易抖动/易挂模型可下调(如 150)以避免单题裸挂数分钟阻塞串行队列
+REQ_TIMEOUT = int(os.environ.get("REQ_TIMEOUT", "300"))
+# 推理生成预算上限(默认 4000)。对长生成易超时/易挂的模型可下调(如 3000)以缩短单题耗时、降低超时率
+MAX_TOKENS_CAP = int(os.environ.get("MAX_TOKENS_CAP", "4000"))
+# 单题最大尝试次数(默认 6)。对易挂模型的特定题可下调(如 3)以快速失败、避免每题耗数分钟
+MAX_ATTEMPTS = int(os.environ.get("MAX_ATTEMPTS", "6"))
 
 def _mk_body(model, content, max_tokens, temperature, stream, with_reasoning=True):
     b = {"model": model, "messages": [{"role": "user", "content": content}],
@@ -65,7 +73,7 @@ def chat_stream(model, content, max_tokens=4000, timeout=300, temperature=0.3):
         req = urllib.request.Request(BASE + "/chat/completions", data=body,
             headers={"Authorization": "Bearer " + KEY, "Content-Type": "application/json",
                      "User-Agent": UA, "Accept": "text/event-stream"}, method="POST")
-        t0 = time.time(); first = None; buf = []; status = 200; err = ""
+        t0 = time.time(); first = None; buf = []; reason_buf = []; status = 200; err = ""
         try:
             r = opener().open(req, timeout=timeout)
             for raw in r:
@@ -83,7 +91,14 @@ def chat_stream(model, content, max_tokens=4000, timeout=300, temperature=0.3):
                 if d:
                     if first is None: first = time.time() - t0
                     buf.append(d)
-            return ("".join(buf), (first or time.time() - t0), round(time.time() - t0, 2), status, err)
+                # 推理模型把最终答案放在 reasoning_content 而 content 为空 → 兜底收集(避免空响应重试)
+                try: rc = obj["choices"][0]["delta"].get("reasoning_content", "")
+                except Exception: rc = ""
+                if rc: reason_buf.append(rc)
+            out = "".join(buf)
+            if not out and reason_buf:
+                out = "".join(reason_buf)
+            return (out, (first or time.time() - t0), round(time.time() - t0, 2), status, err)
         except urllib.error.HTTPError as e:
             try: b = e.read().decode("utf-8", "replace")
             except Exception: b = ""
@@ -109,7 +124,12 @@ def chat_simple(model, content, max_tokens=10, timeout=60, temperature=0, base=B
         r = opener().open(req, timeout=timeout); data = r.read()
         if "gzip" in r.headers.get("Content-Encoding", "").lower(): data = gzip.decompress(data)
         obj = json.loads(data)
-        return obj["choices"][0]["message"]["content"].strip(), 200
+        msg = obj["choices"][0]["message"]
+        txt = (msg.get("content") or "").strip()
+        # 推理模型把答案写在 reasoning_content 而 content 为空(被 max_tokens 截断) → 兜底取 reasoning_content
+        if not txt and msg.get("reasoning_content"):
+            txt = msg["reasoning_content"].strip()
+        return txt, 200
     except urllib.error.HTTPError as e:
         return "", e.code
     except Exception:
@@ -156,7 +176,7 @@ def extract_code(text):
 def judge_call(question, rubric, answer):
     prompt = ("你是严格的评分员。根据评分标准对回答打分(0-100整数)，只输出一个数字分数，不要解释。\n"
               f"题目：{question}\n评分标准：{rubric}\n回答：{answer}\n分数：")
-    out, st = chat_simple(JUDGE, prompt, max_tokens=8, temperature=0, base=JUDGE_BASE, key=JUDGE_KEY)
+    out, st = chat_simple(JUDGE, prompt, max_tokens=64, temperature=0, base=JUDGE_BASE, key=JUDGE_KEY)
     if st != 200: return None, "judge-fail"
     m = re.search(r"\d+", out)
     if m: return max(0, min(100, int(m.group(0)))), "judge"
@@ -419,16 +439,29 @@ def build_prompt(q):
 
 def run_model(model, questions, done, env, smoke=False):
     log(f"===== 开始模型 {model} =====")
+    # 预热: 避免冷启动首问返回空内容(st=200 但 text 为空)
+    try:
+        _w, _ws = chat_simple(model, "ping", max_tokens=4, timeout=60, temperature=0)
+        log(f"  预热完成 st={_ws}")
+    except Exception as e:
+        log(f"  预热异常 {type(e).__name__}: {e}")
     for q in questions:
         key = (model, q["qid"]); rd = done.get(key)
         if rd:
             st = rd.get("status")
             if st == "ok":
                 log(f"  跳过 {q['qid']} (ok {rd.get('score')})"); continue
-        for attempt in range(6):
+        rec_saved = False
+        for attempt in range(MAX_ATTEMPTS):
             mt = max(q.get("max", 4000), 4000)  # 统一高思考强度: 推理预算下限 4000
+            mt = min(mt, MAX_TOKENS_CAP)  # 可降档避免长生成超时(对易挂模型)
             prompt = build_prompt(q)
-            text, ttft, el, st, err = chat_stream(model, prompt, max_tokens=mt, timeout=300, temperature=0.0)
+            if USE_STREAM:
+                text, ttft, el, st, err = chat_stream(model, prompt, max_tokens=mt, timeout=REQ_TIMEOUT, temperature=0.0)
+            else:
+                _t0 = time.time()
+                text, st = chat_simple(model, prompt, max_tokens=mt, timeout=REQ_TIMEOUT, temperature=0.0)
+                el = round(time.time() - _t0, 2); ttft = None; err = ""
             if st == 200 and text.strip():
                 try:
                     score, detail = grade_question(q, text, env)
@@ -436,13 +469,12 @@ def run_model(model, questions, done, env, smoke=False):
                     rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
                            "score": None, "status": "grade_error",
                            "detail": f"grader-exc:{type(e).__name__}:{str(e)[:120]}"}
-                    save_result(rec); log(f"  {q['qid']} 判分异常 {type(e).__name__}: {e}"); break
+                    save_result(rec); log(f"  {q['qid']} 判分异常 {type(e).__name__}: {e}"); rec_saved = True; break
                 rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
                        "score": round(score, 1), "ttft": round(ttft, 2) if ttft else None,
                        "elapsed": el, "status": "ok", "detail": detail, "answer": text[:4000],
                        "reasoning": REASONING_EFFORT or None}
-                save_result(rec); log(f"  {q['qid']}({q.get('lvl','')}) 得分 {score:.1f}  {detail}")
-                break
+                save_result(rec); log(f"  {q['qid']}({q.get('lvl','')}) 得分 {score:.1f}  {detail}"); rec_saved = True; break
             elif st == 429 or "429" in str(err):
                 wait = 45 * (attempt + 1); log(f"  {q['qid']} 429, 等待 {wait}s"); time.sleep(wait)
             elif st == 402 or "402" in str(err) or "Insufficient Balance" in str(err) or "insufficient" in str(err).lower():
@@ -451,20 +483,26 @@ def run_model(model, questions, done, env, smoke=False):
                 else:
                     rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
                            "score": None, "status": "unavailable", "detail": f"402 {str(err)[:100]}"}
-                    save_result(rec); log(f"  {q['qid']} 余额不足(402): {err[:80]}"); break
+                    save_result(rec); log(f"  {q['qid']} 余额不足(402): {err[:80]}"); rec_saved = True; break
             elif st == 503 or "503" in str(err) or "model_not_found" in str(err) or "No available channel" in str(err):
                 rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
                        "score": None, "status": "unavailable", "detail": str(err)[:120]}
-                save_result(rec); log(f"  {q['qid']} 不可用(503): {err[:80]}"); break
+                save_result(rec); log(f"  {q['qid']} 不可用(503): {err[:80]}"); rec_saved = True; break
             elif st in (400, 401) or "not supported" in str(err).lower() or "not available" in str(err).lower() or "exhausted" in str(err).lower():
                 if attempt < 2:
                     log(f"  {q['qid']} {st} 后端暂不可用, 10s 重试"); time.sleep(10)
                 else:
                     rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
                            "score": None, "status": "unavailable", "detail": f"{st} {str(err)[:100]}"}
-                    save_result(rec); log(f"  {q['qid']} 后端不可用({st}): {err[:80]}"); break
+                    save_result(rec); log(f"  {q['qid']} 后端不可用({st}): {err[:80]}"); rec_saved = True; break
             else:
-                wait = 10 * (attempt + 1); log(f"  {q['qid']} 错误 st={st} err={err[:80]} 等待 {wait}s"); time.sleep(wait)
+                # st=200 但空内容(冷启动)或其它瞬时错误: 短等待重试
+                wait = 10; log(f"  {q['qid']} st={st} 空响应/瞬时错误, {wait}s 后重试"); time.sleep(wait)
+        # 6 次仍无有效记录 → 落盘 unavailable, 下次(预热后)补跑, 绝不静默丢弃
+        if not rec_saved:
+            rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
+                   "score": None, "status": "unavailable", "detail": "empty-200/transient after 6 retries"}
+            save_result(rec); log(f"  {q['qid']} 6 次重试仍异常, 标记 unavailable 待补")
     log(f"===== 完成模型 {model} =====")
 
 def main():
