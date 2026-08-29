@@ -1,0 +1,160 @@
+{
+  "generated": "2026-08-29",
+  "n_models": 22,
+  "models": [
+    {
+      "model": "deepseek-v4-pro",
+      "ok": 70,
+      "raw": 117.6,
+      "norm": 117.6,
+      "full": true
+    },
+    {
+      "model": "kimi-k2.7-code",
+      "ok": 70,
+      "raw": 114.5,
+      "norm": 114.5,
+      "full": true
+    },
+    {
+      "model": "deepseek-v4-flash",
+      "ok": 70,
+      "raw": 113.6,
+      "norm": 113.6,
+      "full": true
+    },
+    {
+      "model": "gemini-3.7-flash",
+      "ok": 70,
+      "raw": 111.9,
+      "norm": 111.9,
+      "full": true
+    },
+    {
+      "model": "glm-5.2",
+      "ok": 70,
+      "raw": 108.3,
+      "norm": 108.3,
+      "full": true
+    },
+    {
+      "model": "glm-5.3-flash",
+      "ok": 70,
+      "raw": 90.6,
+      "norm": 90.6,
+      "full": true
+    },
+    {
+      "model": "deepseek-v4-flash-vision-exp",
+      "ok": 55,
+      "raw": 89.9,
+      "norm": 107.9,
+      "full": false
+    },
+    {
+      "model": "minimax-m3",
+      "ok": 70,
+      "raw": 88.8,
+      "norm": 88.8,
+      "full": true
+    },
+    {
+      "model": "gemini-3.1-pro-preview",
+      "ok": 53,
+      "raw": 83.2,
+      "norm": 106.7,
+      "full": false
+    },
+    {
+      "model": "stealth/ox-alpha",
+      "ok": 56,
+      "raw": 82.1,
+      "norm": 95.5,
+      "full": false
+    },
+    {
+      "model": "gpt-oss-120b",
+      "ok": 54,
+      "raw": 81.2,
+      "norm": 99.0,
+      "full": false
+    },
+    {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "ok": 56,
+      "raw": 80.2,
+      "norm": 93.3,
+      "full": false
+    },
+    {
+      "model": "kimi-k3",
+      "ok": 54,
+      "raw": 72.9,
+      "norm": 91.1,
+      "full": false
+    },
+    {
+      "model": "nvidia/minimax-m3",
+      "ok": 55,
+      "raw": 70.5,
+      "norm": 82.9,
+      "full": false
+    },
+    {
+      "model": "oc/mimo-v2.5",
+      "ok": 55,
+      "raw": 68.4,
+      "norm": 81.4,
+      "full": false
+    },
+    {
+      "model": "gpt-4.1",
+      "ok": 56,
+      "raw": 67.6,
+      "norm": 78.7,
+      "full": false
+    },
+    {
+      "model": "mistral-large-latest",
+      "ok": 56,
+      "raw": 62.3,
+      "norm": 72.5,
+      "full": false
+    },
+    {
+      "model": "nvidia/riva-translate-4b-instruct-v2",
+      "ok": 69,
+      "raw": 13.0,
+      "norm": 13.3,
+      "full": false
+    },
+    {
+      "model": "anthropic/claude-sonnet-4.6",
+      "ok": 56,
+      "raw": 12.0,
+      "norm": 13.9,
+      "full": false
+    },
+    {
+      "model": "nvidia/riva-translate-4b-instruct-v1.1",
+      "ok": 68,
+      "raw": 5.7,
+      "norm": 6.0,
+      "full": false
+    },
+    {
+      "model": "grok-chat-fast",
+      "ok": 56,
+      "raw": 4.5,
+      "norm": 5.2,
+      "full": false
+    },
+    {
+      "model": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
+      "ok": 69,
+      "raw": 2.2,
+      "norm": 2.2,
+      "full": false
+    }
+  ]
+}

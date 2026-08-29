@@ -176,8 +176,14 @@ def extract_code(text):
 def judge_call(question, rubric, answer):
     prompt = ("你是严格的评分员。根据评分标准对回答打分(0-100整数)，只输出一个数字分数，不要解释。\n"
               f"题目：{question}\n评分标准：{rubric}\n回答：{answer}\n分数：")
-    out, st = chat_simple(JUDGE, prompt, max_tokens=64, temperature=0, base=JUDGE_BASE, key=JUDGE_KEY)
-    if st != 200: return None, "judge-fail"
+    for attempt in range(3):
+        out, st = chat_simple(JUDGE, prompt, max_tokens=64, temperature=0, base=JUDGE_BASE, key=JUDGE_KEY)
+        if st == 200:
+            m = re.search(r"\d+", out)
+            if m:
+                return max(0, min(100, int(m.group(0)))), "judge"
+        time.sleep(2)
+    return None, "judge-fail"
     m = re.search(r"\d+", out)
     if m: return max(0, min(100, int(m.group(0)))), "judge"
     return None, "judge-num"
@@ -470,6 +476,11 @@ def run_model(model, questions, done, env, smoke=False):
                            "score": None, "status": "grade_error",
                            "detail": f"grader-exc:{type(e).__name__}:{str(e)[:120]}"}
                     save_result(rec); log(f"  {q['qid']} 判分异常 {type(e).__name__}: {e}"); rec_saved = True; break
+                if score is None:
+                    rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
+                           "score": None, "status": "judge-fail", "detail": detail,
+                           "answer": text[:4000], "reasoning": REASONING_EFFORT or None}
+                    save_result(rec); log(f"  {q['qid']} 裁判失败 {detail}"); rec_saved = True; break
                 rec = {"model": model, "qid": q["qid"], "src": q["src"], "lvl": q.get("lvl", ""),
                        "score": round(score, 1), "ttft": round(ttft, 2) if ttft else None,
                        "elapsed": el, "status": "ok", "detail": detail, "answer": text[:4000],
